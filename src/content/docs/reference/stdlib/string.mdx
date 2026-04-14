@@ -1,0 +1,29 @@
+---
+title: String
+description: Standard library methods for the String type in Vertex.
+sidebar:
+  order: 2
+---
+
+| Method                        | Returns                      | Notes                                        |
+|-------------------------------|------------------------------|----------------------------------------------|
+| `.length()`                   | `Int`                        |                                              |
+| `.isEmpty()`                  | `Bool`                       |                                              |
+| `.toUpperCase()`              | `String`                     |                                              |
+| `.toLowerCase()`              | `String`                     |                                              |
+| `.capitalise()`               | `String`                     | First char upper, rest lower                 |
+| `.trim()`                     | `String`                     |                                              |
+| `.trimStart()`                | `String`                     |                                              |
+| `.trimEnd()`                  | `String`                     |                                              |
+| `.contains(s: String)`        | `Bool`                       |                                              |
+| `.startsWith(s: String)`      | `Bool`                       |                                              |
+| `.endsWith(s: String)`        | `Bool`                       |                                              |
+| `.indexOf(s: String)`         | `Option<Int>`                | `None` if not found                          |
+| `.substring(start, end: Int)` | `Option<String>`             | `None` if out of bounds                      |
+| `.replace(from, to: String)`  | `String`                     | Replaces all occurrences                     |
+| `.split(sep: String)`         | `List<String>`               |                                              |
+| `.splitOnce(sep: String)`     | `Option<#(String, String)>`  | `None` if separator not found                |
+| `.reverse()`                  | `String`                     |                                              |
+| `.first()`                    | `Option<String>`             | First character, `None` if empty             |
+| `.last()`                     | `Option<String>`             | Last character, `None` if empty              |
+| `.toOption()`                 | `Option<String>`             | `None` if empty string, `Some(s)` otherwise  |

@@ -1,0 +1,123 @@
+---
+title: Salesforce Integration
+description: SObject types, DML operations, @AuraEnabled, and Apex FFI in Vertex.
+sidebar:
+  order: 10
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## `@SObject` — Salesforce Object types
+
+Mark a single-variant `type` with `@SObject` to treat it as a Salesforce SObject:
+
+```vertex
+@SObject
+type Account {
+    Account(Name: String)
+}
+
+let acc = Account(Name: "ACME")
+```
+
+Every `@SObject` type automatically gets an `Id: Option<Id>` field. This enables the insert-then-update pattern:
+
+```vertex
+fn create_and_rename(name: String): Result<Void, DmlError> {
+    let acc = Account(Name: name)
+    let assert Ok(new_id) = Database.insert(acc)
+    let updated = Account(Name: "Updated: ${name}", Id: Some(new_id))
+    Database.update(updated)
+}
+```
+
+## DML operations
+
+All database operations return `Result<T, DmlError>`:
+
+```vertex
+let result = Database.insert(Account(Name: "ACME"))
+match result {
+    Ok(id)    => debug "Created: ${id.toString()}",
+    Error(err) => debug "Failed: ${err.message}",
+}
+```
+
+| Operation                 | Success type |
+|---------------------------|--------------|
+| `Database.insert(sobj)`   | `Id`         |
+| `Database.update(sobj)`   | `Void`       |
+| `Database.delete(sobj)`   | `Void`       |
+| `Database.undelete(sobj)` | `Void`       |
+
+<Aside type="note">
+In JIT mode, DML operations are simulated — `insert` returns a stub `Id` and all operations print a notice to stderr. No Salesforce connection is needed for local development.
+</Aside>
+
+## `@AuraEnabled` — Lightning components
+
+Mark a function as callable from LWC with `@AuraEnabled`. It must return `Result<T, AuraError>`:
+
+```vertex
+@AuraEnabled(cacheable: true)
+fn getAccountName(id: String): Result<String, AuraError> {
+    // On Ok, the value is returned directly to LWC
+    // On Error, AuraHandledException is thrown automatically
+    Ok("ACME")
+}
+```
+
+For LWC data transfer objects, annotate the type too:
+
+```vertex
+@AuraEnabled
+pub type AccountDto {
+    AccountDto(name: String, revenue: Decimal)
+}
+```
+
+## Apex FFI
+
+Vertex can call existing Apex code through `extern` declarations:
+
+```vertex
+// Declare an Apex class as a Vertex type
+extern type Messaging.SingleEmailMessage
+
+// Declare an Apex constructor
+extern new Messaging.SingleEmailMessage(): Messaging.SingleEmailMessage
+
+// Declare an Apex instance method
+extern method Messaging.SingleEmailMessage.setSubject(
+    self: Messaging.SingleEmailMessage,
+    subject: String,
+): Void
+
+// Use it
+let msg = Messaging.SingleEmailMessage.new()
+msg.setSubject("Hello from Vertex")
+```
+
+<Aside type="caution">
+`extern` declarations are not callable in JIT mode — they require the Salesforce runtime. Calling an extern fn locally produces a runtime error.
+</Aside>
+
+## Sharing modifiers
+
+Control the Apex sharing modifier at the top of any `.vtx` file:
+
+```vertex
+@WithoutSharing   // or @WithSharing, @InheritedSharing
+
+import lang/db
+
+pub fn run(): Void { ... }
+```
+
+The default is `with sharing` — the safe Salesforce security default.
+
+## Next steps
+
+- [Salesforce Integration reference](/reference/salesforce-integration/) — `@SObject`, `Database.*`, `Id` type
+- [Apex FFI reference](/reference/apex-ffi/) — `extern type`, `extern fn`, `extern method`, `extern field`, `extern enum`
+- [Annotations reference](/reference/annotations/) — `@AuraEnabled`, sharing modifiers

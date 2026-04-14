@@ -1,0 +1,13 @@
+---
+title: Type Aliases
+description: Creating named aliases for types in Vertex.
+---
+
+```vertex
+type AccountId = String
+type Price = Decimal
+```
+
+Type aliases create a new name for an existing type. They are **transparent** at compile time — `AccountId` and `String` are interchangeable. Aliases have no representation in generated Apex.
+
+For named function types, see the [function type aliases](/reference/functions/#function-type-aliases) section under Functions.

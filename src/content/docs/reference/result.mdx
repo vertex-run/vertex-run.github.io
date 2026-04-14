@@ -1,0 +1,75 @@
+---
+title: Result<T, E>
+description: The Result type for representing success or failure without exceptions in Vertex.
+---
+
+`Result<T, E>` is a built-in sum type with `Ok` and `Error` variants.
+
+```vertex
+fn safe_divide(
+    a: Int,
+    b: Int,
+): Result<Int, String> {
+    if b == 0 {
+        Error("cannot divide by zero")
+    } else {
+        Ok(a / b)
+    }
+}
+```
+
+```vertex
+match safe_divide(10, 2) {
+    Ok(v)    => "result: " + v,
+    Error(e) => "error: " + e,
+}
+```
+
+### Combinator methods
+
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `isOk()` | `Result<T,E>` | `Bool` | `true` if this is `Ok`. |
+| `isError()` | `Result<T,E>` | `Bool` | `true` if this is `Error`. |
+| `unwrapOr(default: T)` | `Result<T,E>` | `T` | Returns the `Ok` value, or `default` if `Error`. The default is always evaluated. |
+| `unwrapOrElse(f: fn(E): T)` | `Result<T,E>` | `T` | Returns the `Ok` value, or calls `f(error)` if `Error`. |
+| `map(f: fn(T): U)` | `Result<T,E>` | `Result<U,E>` | Applies `f` to the `Ok` value. `Error` passes through. |
+| `mapError(f: fn(E): F)` | `Result<T,E>` | `Result<T,F>` | Applies `f` to the `Error` value. `Ok` passes through. |
+| `flatMap(f: fn(T): Result<U,E>)` | `Result<T,E>` | `Result<U,E>` | Applies `f` if `Ok` and returns the resulting `Result` directly. |
+| `toOption()` | `Result<T,E>` | `Option<T>` | `Ok(v)` → `Some(v)`, `Error(_)` → `None`. |
+
+```vertex
+let r: Result<Int, String> = safe_divide(10, 2)
+
+// unwrap with default
+let n: Int = r.unwrapOr(0)
+
+// transform the Ok value
+let doubled: Result<Int, String> = r.map(fn(x: Int): Int { x * 2 })
+
+// convert Error to a different type
+let reMapped: Result<Int, Int> = r.mapError(fn(e: String): Int { e.length() })
+
+// chain operations
+let final: Int = r
+    .flatMap(fn(x: Int): Result<Int, String> { Ok(x + 1) })
+    .unwrapOr(0)
+
+// convert to Option (discards error)
+let opt: Option<Int> = r.toOption()
+```
+
+### `?` operator — early error propagation
+
+Applied to a `Result<T, E>` expression inside a function that also returns
+`Result<_, E>`. If the value is `Error(e)`, propagates immediately; otherwise
+unwraps the `Ok` value.
+
+```vertex
+fn process(
+    raw: Int,
+): Result<String, String> {
+    let age = validate_age(raw)?
+    Ok(label_age(age))
+}
+```

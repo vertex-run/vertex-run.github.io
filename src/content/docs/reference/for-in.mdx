@@ -1,0 +1,21 @@
+---
+title: for..in Loop
+description: Iterating over lists with the for..in loop in Vertex.
+---
+
+Iterates over a `List<T>`. The loop variable is immutable inside the body.
+
+```vertex
+mutable let total = 0
+for item in items {
+    total = total + item
+}
+```
+
+The loop head supports full pattern destructuring:
+
+```vertex
+for #(index, value) in pairs { ... }      // tuple destructuring
+for Circle(radius: r) in shapes { ... }   // variant destructuring
+for _ in items { ... }                     // wildcard
+```

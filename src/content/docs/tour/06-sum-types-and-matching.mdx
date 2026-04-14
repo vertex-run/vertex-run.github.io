@@ -1,0 +1,134 @@
+---
+title: Sum Types and Pattern Matching
+description: Defining algebraic sum types and using exhaustive match expressions in Vertex.
+sidebar:
+  order: 6
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Defining sum types
+
+Sum types are declared with the `type` keyword. Each variant either carries named fields or is a plain unit variant:
+
+```vertex
+type Direction {
+    North,
+    South,
+    East,
+    West,
+}
+
+type Shape {
+    Circle(radius: Double),
+    Rectangle(width: Double, height: Double),
+}
+```
+
+## Constructing variants
+
+```vertex
+let dir = North                        // unit variant — no parentheses
+let c   = Circle(radius: 5.0)         // named fields
+let c2  = Circle(5.0)                 // positional — same as above
+```
+
+Unit variants are referenced by name alone. `North()` is a compile error.
+
+## Exhaustive `match`
+
+`match` is Vertex's primary tool for working with sum types. The compiler verifies that every variant is covered:
+
+```vertex
+fn area(s: Shape): Double {
+    match s {
+        Circle(radius: r)               => 3.14159 * r * r,
+        Rectangle(width: w, height: h) => w * h,
+    }
+}
+```
+
+<Aside type="tip">
+If you add a new variant to `Shape`, every `match` in the codebase that doesn't cover it becomes a compile error. This is the key safety guarantee of exhaustive matching.
+</Aside>
+
+## Field shorthand (punning)
+
+When the binding name matches the field name, use `field:` instead of `field: field`:
+
+```vertex
+// Long form
+match s { Circle(radius: radius) => radius * 2.0 }
+
+// Shorthand — equivalent
+match s { Circle(radius:) => radius * 2.0 }
+```
+
+## Match guards
+
+```vertex
+match score {
+    n if n >= 90 => "A",
+    n if n >= 80 => "B",
+    _            => "F",   // wildcard: matches anything
+}
+```
+
+## Multi-subject match
+
+```vertex
+let msg = match isAdmin, isActive {
+    true, true   => "Active admin",
+    true, false  => "Inactive admin",
+    false, _     => "User",
+}
+```
+
+## OR-patterns
+
+```vertex
+match status {
+    "active" | "pending" => true,
+    _                    => false,
+}
+```
+
+## Direct field access
+
+When the compiler knows the exact variant statically, you can access fields directly:
+
+```vertex
+let c = Circle(radius: 5.0)
+debug c.radius   // 5.0 — no match needed; static type is Circle
+```
+
+When every variant shares a field with the same name and type, you can access it on the parent type too:
+
+```vertex
+type Ticket {
+    VIP(price: Int, available: Int),
+    Standard(price: Int, available: Int),
+}
+
+fn getAvailable(t: Ticket): Int {
+    t.available   // valid — both variants have 'available: Int'
+}
+```
+
+## `let assert` — unsafe extraction
+
+<Aside type="caution">
+Panics at runtime if the pattern doesn't match. Use only when you know the variant is guaranteed.
+</Aside>
+
+```vertex
+let assert Ok(value) = safe_divide(10, 2)
+```
+
+Prefer `if let` for conditional extraction or `match` for exhaustive dispatch.
+
+## Next steps
+
+- [Sum Types reference](/reference/sum-types/)
+- [Pattern Matching reference](/reference/pattern-matching/) — list patterns, OR-patterns, `let assert`
+- [Option\<T\>](/reference/option/) and [Result\<T, E\>](/reference/result/) — the built-in sum types

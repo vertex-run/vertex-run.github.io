@@ -1,0 +1,42 @@
+---
+title: FizzBuzz
+description: A complete FizzBuzz example in Vertex using recursive functions and if expressions.
+---
+
+A classic FizzBuzz implementation showing recursive functions and `if` as an expression.
+
+```vertex
+fn fizzbuzz(
+    n: Int,
+): String {
+    let fizz = n % 3 == 0
+    let buzz = n % 5 == 0
+    if fizz && buzz {
+        "FizzBuzz"
+    } else if fizz {
+        "Fizz"
+    } else if buzz {
+        "Buzz"
+    } else {
+        "${n}"
+    }
+}
+
+fn run(
+    n: Int,
+    limit: Int,
+): Void {
+    if n <= limit {
+        debug fizzbuzz(n)
+        run(n + 1, limit)
+    }
+}
+
+run(1, 20)
+```
+
+Key concepts demonstrated:
+- `if` as an expression that produces a value
+- String interpolation with `${}`
+- Recursive functions
+- `Void`-returning functions that use `if` for control flow

@@ -1,0 +1,49 @@
+---
+title: Numeric
+description: Standard library methods for Int, Long, Double, Decimal, and Bool in Vertex.
+sidebar:
+  order: 1
+---
+
+## `Int`
+
+| Method         | Returns   |
+|----------------|-----------|
+| `.toDecimal()` | `Decimal` |
+| `.toDouble()`  | `Double`  |
+| `.toLong()`    | `Long`    |
+| `.abs()`       | `Int`     |
+| `.toString()`  | `String`  |
+
+## `Long`
+
+| Method         | Returns   |
+|----------------|-----------|
+| `.toDecimal()` | `Decimal` |
+| `.toDouble()`  | `Double`  |
+| `.toInt()`     | `Int`     |
+| `.abs()`       | `Long`    |
+| `.toString()`  | `String`  |
+
+## `Double`
+
+| Method         | Returns           |
+|----------------|-------------------|
+| `.toDecimal()` | `Decimal`         |
+| `.toInt()`     | `Int` (truncates) |
+| `.abs()`       | `Double`          |
+| `.toString()`  | `String`          |
+
+## `Decimal`
+
+| Method        | Returns           |
+|---------------|-------------------|
+| `.toInt()`    | `Int` (truncates) |
+| `.abs()`      | `Decimal`         |
+| `.toString()` | `String`          |
+
+## `Bool`
+
+| Method        | Returns  |
+|---------------|----------|
+| `.toString()` | `String` |

@@ -1,0 +1,91 @@
+---
+title: Control Flow
+description: if/else expressions, if let, block expressions, and early return in Vertex.
+sidebar:
+  order: 4
+---
+
+## `if` is an expression
+
+In Vertex, `if` produces a value. You can use it anywhere an expression is expected:
+
+```vertex
+let score = 85
+
+let grade = if score >= 90 {
+    "A"
+} else if score >= 80 {
+    "B"
+} else {
+    "F"
+}
+
+debug grade   // "B"
+```
+
+Every branch must produce the same type. An `if` without `else` is only valid where `Void` is acceptable.
+
+## Block expressions
+
+A block `{ ... }` is also an expression. Its value is its **trailing expression**:
+
+```vertex
+let result = {
+    let x = 5
+    let y = 3
+    x * y       // trailing expression — this is the block's value
+}
+debug result    // 15
+```
+
+## `if let` — conditional pattern matching
+
+`if let` checks whether a value matches a pattern, and if so, binds the pattern's
+variables in the then-block. It is the idiomatic way to handle a single variant:
+
+```vertex
+fn find_user(id: Int): Option<String> {
+    if id == 1 { Some("Alice") } else { None }
+}
+
+if let Some(name) = find_user(42) {
+    debug "Found: ${name}"
+}
+// (nothing printed — find_user(42) returns None)
+
+// With else:
+let greeting = if let Some(name) = find_user(1) {
+    "Hello, ${name}!"
+} else {
+    "Hello, stranger!"
+}
+debug greeting   // "Hello, Alice!"
+```
+
+Pattern bindings are scoped to the then-block only — not visible in the `else` branch.
+
+## Early return
+
+Use `return` for early exit from a function:
+
+```vertex
+fn divide(a: Int, b: Int): Int {
+    if b == 0 { return 0 }
+    a / b
+}
+```
+
+For fallible operations, prefer returning `Result<T, E>` rather than a sentinel value:
+
+```vertex
+fn safe_divide(a: Int, b: Int): Result<Int, String> {
+    if b == 0 { return Error("division by zero") }
+    Ok(a / b)
+}
+```
+
+## Next steps
+
+- [Control Flow reference](/reference/control-flow/) — full `if let` spec
+- [Pattern Matching](/reference/pattern-matching/) — `match` for exhaustive dispatch
+- [Result\<T, E\>](/reference/result/) — the right way to model failure

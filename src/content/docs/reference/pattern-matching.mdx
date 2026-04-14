@@ -1,0 +1,153 @@
+---
+title: Pattern Matching
+description: Exhaustive match expressions, let assert, and pattern syntax in Vertex.
+---
+
+### `match` — exhaustive, checked by the compiler
+
+```vertex
+fn area(
+    s: Shape,
+): Double {
+    match s {
+        Circle(radius: r)               => 3.14159 * r * r,
+        Rectangle(width: w, height: h) => w * h,
+        Triangle(base: b, height: h)   => 0.5 * b * h,
+    }
+}
+```
+
+### Positional destructuring
+
+```vertex
+match s {
+    Circle(r)        => 3.14159 * r * r,
+    Rectangle(w, h)  => w * h,
+}
+```
+
+### Destructuring shorthand (field punning)
+
+When the binding variable has the same name as the field, a trailing colon
+(`field:`) can be used instead of repeating the name (`field: field`):
+
+```vertex
+// Long form
+let Book(title: title, author: author, genre: genre) = b
+
+// Shorthand — equivalent
+let Book(title:, author:, genre:) = b
+```
+
+Shorthand and explicit rename can be freely mixed:
+
+```vertex
+let Book(title:, author: a, genre:) = b   // title and genre use shorthand
+```
+
+The shorthand is valid in all pattern positions: `let`, `let assert`, `match`
+arms, and `for` loop heads.
+
+### Match guards
+
+```vertex
+match score {
+    n if n >= 90 => "A",
+    n if n >= 80 => "B",
+    _            => "F",
+}
+```
+
+### Wildcard `_`
+
+Matches anything, binds nothing.
+
+```vertex
+match weekday {
+    Sat => true,
+    Sun => true,
+    _   => false,
+}
+```
+
+### Literal patterns
+
+```vertex
+match status {
+    "active" => "go",
+    "paused" => "wait",
+    _        => "unknown",
+}
+```
+
+### Multi-subject match
+
+```vertex
+let msg = match isAdmin, isActive {
+    true, true   => "Active admin",
+    true, false  => "Inactive admin",
+    false, _     => "User",
+}
+```
+
+### OR-patterns
+
+Multiple alternatives in a single arm. All alternatives must bind the same
+names with the same types.
+
+```vertex
+match ticket {
+    VIP(price: p) | Bleachers(price: p) | GeneralAdmission(price: p) => p,
+    FreePass => 0,
+}
+```
+
+Literal alternatives work too:
+
+```vertex
+match status {
+    "active" | "pending" => true,
+    _ => false,
+}
+```
+
+OR-patterns can have guards; the guard applies to the whole arm:
+
+```vertex
+match ticket {
+    VIP(price: p) | Bleachers(price: p) if p > 50 => "premium",
+    _ => "standard",
+}
+```
+
+OR-patterns are only valid as the top-level arm pattern in a single-subject
+`match`. They are not valid in `let`, `let assert`, `for`, or multi-subject
+match arms.
+
+### List patterns (inside `match` only)
+
+```vertex
+match items {
+    []              => "empty",
+    [head, ...rest] => "starts with ${head}",
+    [a, b, ..]      => "at least two elements",
+}
+```
+
+`...rest` captures the tail as a `List`. `..` discards it.
+
+### `let assert` — runtime-checked single-pattern extraction
+
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside type="caution">
+Panics at runtime if the pattern does not match. Use only when you know the variant is guaranteed.
+</Aside>
+
+```vertex
+let assert Ok(value: n)      = someResult
+let assert Circle(radius: r) = shape
+```
+
+Valid patterns in `let assert`: variant, tuple, identifier, wildcard.
+List patterns and literal patterns are **not** valid in `let assert`.

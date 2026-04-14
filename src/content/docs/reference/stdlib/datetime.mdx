@@ -1,0 +1,79 @@
+---
+title: Datetime
+description: The Datetime type — point-in-time values with local and UTC support.
+sidebar:
+  order: 4
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`Datetime` represents a point in time (year, month, day, hour, minute, second).
+Values are **local-timezone** by default, matching Apex's `Datetime.newInstance` semantics.
+
+## Factory methods
+
+| Factory                                                    | Returns             | Notes                          |
+|------------------------------------------------------------|---------------------|--------------------------------|
+| `Datetime.of(year, month, day, hour, minute, second)`      | `Datetime`          | All args `Int`, local time     |
+| `Datetime.now()`                                           | `Datetime`          | Current local datetime         |
+| `Datetime.ofUtc(year, month, day, hour, minute, second)`   | `Datetime`          | All args `Int`, UTC time       |
+| `Datetime.nowUtc()`                                        | `Datetime`          | Current datetime (UTC)         |
+| `Datetime.parse(s: String)`                                | `Option<Datetime>`  | Accepts `yyyy-MM-dd HH:mm:ss` only; `None` on invalid input |
+
+## Instance methods
+
+| Method           | Returns  | Notes                                                         |
+|------------------|----------|---------------------------------------------------------------|
+| `.year()`        | `Int`    | Local year component                                          |
+| `.month()`       | `Int`    | Local month component                                         |
+| `.day()`         | `Int`    | Local day component                                           |
+| `.hour()`        | `Int`    | Local hour component                                          |
+| `.minute()`      | `Int`    | Local minute component                                        |
+| `.second()`      | `Int`    | Local second component                                        |
+| `.toDate()`      | `Date`   | Drops time component (local)                                  |
+| `.toString()`    | `String` | Format: `yyyy-MM-dd HH:mm:ss` (local time)                    |
+| `.yearUtc()`     | `Int`    | UTC year component                                            |
+| `.monthUtc()`    | `Int`    | UTC month component                                           |
+| `.dayUtc()`      | `Int`    | UTC day component                                             |
+| `.hourUtc()`     | `Int`    | UTC hour component                                            |
+| `.minuteUtc()`   | `Int`    | UTC minute component                                          |
+| `.secondUtc()`   | `Int`    | UTC second component                                          |
+| `.toDateUtc()`   | `Date`   | Drops time component (UTC)                                    |
+| `.toStringUtc()` | `String` | Format: `yyyy-MM-dd HH:mm:ss` (UTC)                           |
+| `.add(years:, months:, days:, hours:, minutes:, seconds:)` | `Datetime` | All args optional (default 0), at least one required. Negative values subtract. |
+| `.format(DateFormat)` | `String` | Format the datetime using a `DateFormat` value. |
+
+## Parsing
+
+`Datetime.parse(s: String)` returns `Option<Datetime>`. Only the format `yyyy-MM-dd HH:mm:ss`
+is accepted (matching Apex's `Datetime.valueOf`). Any other format returns `None`.
+
+```vertex
+let dt = Datetime.parse(s: "2024-03-15 10:30:00")   // Some(Datetime)
+let x  = Datetime.parse(s: "2024-03-15T10:30:00Z")  // None
+```
+
+## Arithmetic
+
+`datetime.add(...)` returns a new `Datetime` shifted by the given units:
+
+```vertex
+datetime.add(hours: 2)
+datetime.add(days: 1, hours: -3)
+datetime.add(years: 1, months: 2, days: 3, hours: 4)
+```
+
+## Operators
+
+`==`, `!=`, `<`, `<=`, `>`, `>=` — direct datetime comparison.
+
+## `--compare` and timezone
+
+<Aside type="note">
+`Datetime.of` / `Datetime.now` are local-time; `System.debug(Datetime)` on Salesforce
+prints in UTC. On non-UTC orgs these will differ from JIT output. `--compare` treats
+such lines as **soft matches** (⚠ warning, exit 0).
+
+`Datetime.ofUtc` / `Datetime.nowUtc` values produce identical output in both JIT and
+Salesforce, so `--compare` exits clean with no warnings for UTC-constructed datetimes.
+</Aside>

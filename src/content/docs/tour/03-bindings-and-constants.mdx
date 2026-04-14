@@ -1,0 +1,78 @@
+---
+title: Bindings and Constants
+description: Immutable bindings, mutable bindings, and module-level constants in Vertex.
+sidebar:
+  order: 3
+---
+
+## Bindings
+
+A **binding** connects a name to a value. In Vertex, bindings are immutable by default:
+
+```vertex
+let greeting = "Hello"
+let count: Int = 42         // explicit type annotation
+```
+
+Attempting to reassign an immutable binding is a compile-time error:
+
+```vertex
+let x = 10
+x = 20   // error E101: cannot assign to immutable binding 'x'
+```
+
+For values that need to change, use `mutable let`:
+
+```vertex
+mutable let total = 0
+total = total + 10
+total = total + 20
+debug total   // 30
+```
+
+The `mutable` keyword is intentionally verbose — mutation should feel deliberate.
+
+## Constants
+
+Module-level constants are declared with `const` and must be scalar literals:
+
+```vertex
+const max_retries = 3
+const api_version: String = "v2"
+const pi: Double = 3.14159
+pub const discount_rate = 10       // visible to other modules
+```
+
+Constants are always immutable. No `mutable const` is allowed.
+
+Public constants can be imported by other modules:
+
+```vertex
+import config.{ discount_rate }
+
+debug discount_rate   // 10
+```
+
+## Underscore prefix — silencing unused warnings
+
+Prefixing a name with `_` tells the compiler you intentionally don't use it:
+
+```vertex
+fn process(_ignored: String): Int { 42 }   // W003 suppressed
+let _temp = expensive_setup()               // W002 suppressed
+```
+
+The bare `_` wildcard in patterns is a different concept — it discards a value entirely:
+
+```vertex
+match result {
+    Ok(value) => value,
+    Error(_)  => 0,      // _ discards the error; not a named binding
+}
+```
+
+## Next steps
+
+- [Bindings reference](/reference/basics/bindings/)
+- [Constants reference](/reference/basics/constants/)
+- [Compiler Diagnostics](/reference/diagnostics/) — W002, W003, W004

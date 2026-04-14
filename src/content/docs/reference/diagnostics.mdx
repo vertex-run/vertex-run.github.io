@@ -1,0 +1,50 @@
+---
+title: Compiler Diagnostics
+description: Error and warning codes emitted by the Vertex compiler.
+---
+
+## Errors
+
+| Code   | Meaning                                                      |
+|--------|--------------------------------------------------------------|
+| `E100` | Type mismatch                                                |
+| `E101` | Assignment to an immutable binding                           |
+| `E102` | Undefined name                                               |
+| `E103` | Wrong number of arguments                                    |
+| `E104` | Pattern not valid in this position                           |
+| `E105` | Non-exhaustive `match` (missing variants)                    |
+| `E106` | `?` applied to a non-`Result` value                          |
+| `E107` | Error types don't align in `?` propagation                   |
+| `E108` | Class does not implement all methods required by an interface|
+| `E109` | Name declared twice in the same scope                        |
+| `E110` | `...expr` spread used on a non-`List`                        |
+| `E111` | Method does not exist on this type                           |
+
+## Warnings
+
+| Code   | Meaning                                                    |
+|--------|------------------------------------------------------------|
+| `W001` | `debug` expression left in source                          |
+| `W002` | Local variable declared but never read                     |
+| `W003` | Function or closure parameter never read                   |
+| `W004` | `mutable let` binding read but never reassigned            |
+| `W005` | Private module-level function never called                 |
+| `W006` | Private module-level type or alias never referenced        |
+| `W007` | Private module-level constant never referenced             |
+| `W008` | Variant of a non-externally-constructible type never used  |
+| `W009` | Selectively imported symbol never referenced               |
+
+### Silencing unused-declaration warnings
+
+Prefix a name with `_` (e.g. `_name`) to opt out of W002–W007. This is the
+standard convention for intentionally-unused bindings:
+
+```vertex
+fn process(_ignored: String): Int { 42 }   // W003 suppressed
+let _temp = expensive_computation()         // W002 suppressed
+fn _helper(): Void {}                       // W005 suppressed
+```
+
+The underscore convention does not apply to selective imports (W009) because
+the imported name is defined in another module and cannot be renamed at the
+import site. Remove unused imports instead.

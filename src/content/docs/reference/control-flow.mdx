@@ -1,0 +1,95 @@
+---
+title: Control Flow
+description: if/else, if let, block expressions, and return in Vertex.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+### `if` / `else` — an expression, produces a value
+
+```vertex
+let grade = if score >= 90 {
+    "A"
+} else if score >= 80 {
+    "B"
+} else {
+    "F"
+}
+```
+
+An `if` without `else` is only valid where a `Void` value is acceptable.
+
+### `if let` — conditional variant matching
+
+`if let` checks whether a value matches a pattern and, if so, binds the
+pattern's variables in the then-block. It is the idiomatic way to handle a
+single variant without writing an exhaustive `match`.
+
+```vertex
+// Basic: execute only when the Option is Some
+if let Some(user) = findUser(42) {
+    debug user
+}
+
+// With else
+let name = if let Some(user) = findUser(42) {
+    user.name
+} else {
+    "anonymous"
+}
+
+// Works for any sum type, not just Option/Result
+type ApiResponse { Success(data: String), Loading, Failed(error: String) }
+
+if let Success(data:) = response {
+    process(data)
+}
+```
+
+```vertex
+// Chaining
+if let Circle(radius: r) = shape {
+    debug r
+} else if let Square(side: s) = shape {
+    debug s
+} else {
+    debug "other"
+}
+```
+
+**Scoping:** Pattern bindings are scoped to the **then-block only** — they are
+not visible in the `else` branch or after the `if let` expression.
+
+**When to use each construct:**
+
+| Construct | Intent | On mismatch |
+|-----------|--------|-------------|
+| `match` | Handle **all** variants | N/A (exhaustive) |
+| `if let` | Conditionally handle **one** variant | Branches or skips |
+| `let assert` | Assert a specific variant | **Panics** |
+
+**Valid patterns:** `VariantPat`, `TuplePat`, `IdentPat`, `WildcardPat`. `LiteralPat`, `ListPat`, and `OrPat` are not valid (use `match` for those).
+
+### Block expressions
+
+A block's value is its trailing expression. Without a trailing expression it
+evaluates to `Void`.
+
+```vertex
+let result = {
+    let x = 5
+    x * x
+}
+```
+
+### `return` — early exit from a function
+
+```vertex
+fn divide(
+    a: Int,
+    b: Int,
+): Result<Int, String> {
+    if b == 0 { return Error("division by zero") }
+    Ok(a / b)
+}
+```

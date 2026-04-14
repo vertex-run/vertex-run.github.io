@@ -1,0 +1,146 @@
+---
+title: Salesforce Integration
+description: SObject types, DML operations, Id type, and AuraError in Vertex.
+---
+
+## `@SObject` — Salesforce Object types
+
+The `@SObject` annotation marks a single-variant `type` as a Salesforce Object.
+`@SObject` types are emitted as native Apex SObject constructor calls instead of
+class instances.
+
+```vertex
+@SObject
+type Account {
+    Account(Name: String)
+}
+
+let acc = Account(Name: "ACME")
+```
+
+The compiler implicitly adds an `Id: Option<Id>` field to every `@SObject` type.
+This field maps to the Salesforce record `Id` field and enables the insert-then-update
+pattern:
+
+```vertex
+@SObject
+type Account {
+    Account(Name: String)
+}
+
+fn insert_and_update(
+    name: String,
+): Result<Void, DmlError> {
+    let acc = Account(Name: name)
+    let insert_result = Database.insert(acc)
+    let assert Ok(inserted_id) = insert_result
+    let updated_acc = Account(Name: "Updated: ${name}", Id: Some(inserted_id))
+    Database.update(updated_acc)
+}
+```
+
+- `Id: None` or omitting `Id` → no `Id` field in the emitted Apex (record has no Id)
+- `Id: Some(record_id)` → emits `Id = record_id` in the Apex SObject constructor
+
+## `DmlError` — DML error type
+
+`DmlError` is a built-in type with a single `message: String` field. It is the error
+type returned by all `Database.*` DML operations.
+
+```vertex
+let result: Result<Id, DmlError> = Database.insert(acc)
+```
+
+Pattern match on `DmlError`:
+
+```vertex
+match result {
+    Ok(id)  => debug "Created with id: ${id.toString()}",
+    Error(err) => {
+        let DmlError(message: msg) = err
+        debug "Failed: ${msg}"
+    },
+}
+```
+
+## `Database.*` — DML operations
+
+All DML operations return `Result<T, DmlError>`:
+
+| Operation                   | Return type              |
+|-----------------------------|--------------------------|
+| `Database.insert(sobj)`     | `Result<Id, DmlError>` — `Ok` holds the new record Id |
+| `Database.update(sobj)`     | `Result<Void, DmlError>` |
+| `Database.delete(sobj)`     | `Result<Void, DmlError>` |
+| `Database.undelete(sobj)`   | `Result<Void, DmlError>` |
+
+`Database.update`, `Database.delete`, and `Database.undelete` require the SObject
+argument to have a Salesforce Id set (i.e. `Id: Some(record_id)` in the constructor).
+Calling them on a record with no Id fails on the org.
+
+In JIT mode, DML operations are simulated: `Database.insert` returns a stub `Id` value
+with an incrementing counter, and all operations print a notice to stderr.
+
+## `Id` — Salesforce record identifier
+
+`Id` is a primitive type representing a Salesforce record Id. It is distinct from
+`String` — there is no implicit coercion in either direction.
+
+`Id` values are produced by:
+- `Database.insert` result (`Ok(id)`)
+- `Id.from(string)` — user-supplied construction
+- SOQL query results
+
+### Static factory
+
+| Call                    | Returns       | Description |
+|-------------------------|---------------|-------------|
+| `Id.from(s: String)`    | `Option<Id>`  | Constructs an `Id` from a string. Always returns `Some` — Apex validates the format at assignment/DML time. |
+
+Use `let assert` when the string is a known-good literal:
+
+```vertex
+let assert Some(id) = Id.from("001000000000001AAA")
+```
+
+Use `match` when handling the `None` path is meaningful (e.g. user input):
+
+```vertex
+match Id.from(raw_string) {
+  Some(id) => // use id,
+  None => // handle invalid,
+}
+```
+
+### Instance methods
+
+| Method              | Returns  | Description |
+|---------------------|----------|-------------|
+| `.toString()`       | `String` | Explicit conversion to the raw 15/18-char ID string |
+| `.getSObjectType()` | `String` | SObject API name (e.g. `"Account"`, `"Contact"`) |
+
+### Example
+
+```vertex
+@SObject
+type Account {
+  Account(Name: String)
+}
+
+let result = Database.insert(Account(Name: "ACME"))
+match result {
+  Ok(id) => {
+    debug id                   // Id(000000000000001AAA) in JIT; raw Id in Apex
+    debug id.toString()        // raw string: "000000000000001AAA"
+    debug id.getSObjectType()  // "Account"
+  },
+  Error(_) => debug "failed",
+}
+
+// Constructing an Id from a known literal
+let assert Some(known_id) = Id.from("001000000000001AAA")
+debug known_id.toString()
+```
+
+In JIT mode, `debug id` uses the tagged form `Id(...)` so you can distinguish it
+from a plain `String`. In Apex, `System.debug(id)` outputs the raw Id value.

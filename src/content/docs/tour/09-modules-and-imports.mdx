@@ -1,0 +1,83 @@
+---
+title: Modules and Imports
+description: The file-based module system, import forms, visibility, and constants in Vertex.
+sidebar:
+  order: 9
+---
+
+## File = module
+
+In Vertex, every `.vtx` file is a module. No explicit module declaration is needed. The module name is derived from the filename:
+
+- `accounts.vtx` → module `accounts`
+- `billing/invoices.vtx` → module `billing/invoices`
+
+## Visibility
+
+Declarations are private by default. Use `pub` to export:
+
+```vertex
+// accounts.vtx
+pub fn findById(id: String): Option<Account> { ... }  // exported
+fn validate(a: Account): Bool { ... }                  // private
+```
+
+## Import forms
+
+**Bare import** — access symbols via a qualifier:
+
+```vertex
+import accounts
+
+let acc = accounts.findById("001")
+```
+
+For nested modules, the qualifier is the last path segment:
+
+```vertex
+import billing.invoices
+
+let inv = billing_invoices.create()
+```
+
+**Aliased import** — choose your own qualifier:
+
+```vertex
+import billing.invoices as inv
+
+let i = inv.create()
+```
+
+**Selective import** — bring specific symbols directly into scope:
+
+```vertex
+import accounts.{ findById, Account }
+
+let acc = findById("001")   // no qualifier needed
+```
+
+## Apex class names
+
+Each module maps to an Apex class when compiled:
+
+| Module path        | Apex class            |
+|--------------------|-----------------------|
+| `accounts`         | `Accounts`            |
+| `billing/invoices` | `Billing_Invoices`    |
+| `lang/greeter`     | `Lang_Greeter`        |
+
+## Error codes
+
+| Code   | Meaning                                              |
+|--------|------------------------------------------------------|
+| `E122` | Module not found                                     |
+| `E123` | Symbol not found in module's public API              |
+| `E124` | Attempted access to a private declaration            |
+| `E125` | Cyclic import detected                               |
+| `E126` | Name conflict from two selective imports             |
+
+## Next steps
+
+- [Imports reference](/reference/imports/) — full spec including opaque type error codes
+- [Constants reference](/reference/basics/constants/) — `pub const` for exported values
+- [Annotations](/reference/annotations/) — controlling Apex sharing modifiers per module

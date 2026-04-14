@@ -1,0 +1,203 @@
+---
+title: Collections
+description: List, Map, and Set collection types in Vertex.
+---
+
+## `List<T>`
+
+```vertex
+let names: List<String> = ["Alice", "Bob", "Carol"]
+let empty: List<String> = []
+```
+
+An empty list `[]` requires a type annotation whenever the element type cannot be determined from context:
+
+```vertex
+let empty: List<String> = []      // OK — annotation provides T = String
+let empty = []                     // error: cannot infer element type
+```
+
+When an empty list is passed directly to a function whose parameter type is known,
+the annotation can be omitted:
+
+```vertex
+fn greet(names: List<String>): Void { ... }
+greet([])   // OK — T inferred from the parameter type
+```
+
+Spread syntax combines lists:
+
+```vertex
+let combined = [...list1, ...list2, "extra"]
+```
+
+Lists can be iterated with `for..in` and pattern-matched with list patterns.
+
+There is no subscript syntax (`list[i]`). Use `get(i)` for index access.
+
+### Instance methods
+
+| Method | Signature | Returns | Notes |
+|--------|-----------|---------|-------|
+| `size()` | `List<T>` | `Int` | Number of elements |
+| `isEmpty()` | `List<T>` | `Bool` | `true` when size is 0 |
+| `get(i: Int)` | `List<T>` | `Option<T>` | `None` on out-of-bounds; no panic |
+| `add(item: T)` | `List<T>` | `List<T>` | Mutates in place, returns `self` (chainable) |
+| `first()` | `List<T>` | `Option<T>` | `None` on empty list |
+| `last()` | `List<T>` | `Option<T>` | `None` on empty list |
+| `contains(item: T)` | `List<T>` | `Bool` | Value equality for primitives; reference equality for class instances |
+| `map(f: fn(T): U)` | `List<T>` | `List<U>` | Pure — returns a new list |
+| `filter(f: fn(T): Bool)` | `List<T>` | `List<T>` | Pure — returns a new list |
+| `fold(init: U, f: fn(U, T): U)` | `List<T>` | `U` | Accumulator-first callback convention |
+| `any(f: fn(T): Bool)` | `List<T>` | `Bool` | Short-circuits on first match; `false` on empty |
+| `all(f: fn(T): Bool)` | `List<T>` | `Bool` | Short-circuits on first non-match; `true` on empty (vacuous truth) |
+| `enumerate()` | `List<T>` | `List<#(Int, T)>` | Pairs each element with its zero-based index |
+| `reverse()` | `List<T>` | `List<T>` | Pure — returns a new list in reversed order |
+| `prepend(item: T)` | `List<T>` | `List<T>` | Pure — returns a new list with `item` at the front |
+| `concat(other: List<T>)` | `List<T>` | `List<T>` | Pure — returns a new list with `other` appended |
+| `take(n: Int)` | `List<T>` | `List<T>` | Pure — returns the first `n` elements; `n ≤ 0` returns `[]` |
+| `drop(n: Int)` | `List<T>` | `List<T>` | Pure — skips the first `n` elements; `n ≤ 0` returns a copy |
+| `unique()` | `List<T>` | `List<T>` | Pure — removes duplicates, preserving first-occurrence order |
+| `toSet()` | `List<T>` | `Set<T>` | Converts to a `Set`, removing duplicates |
+| `flatten()` | `List<List<T>>` | `List<T>` | Concatenates all inner lists into a single list |
+| `join(sep: String)` | `List<String>` | `String` | Joins all strings with `sep` |
+| `filterMapSome(f: fn(T): Option<U>)` | `List<T>` | `List<U>` | Applies `f`, keeps only `Some` values, discards `None` |
+| `filterMapOk(f: fn(T): Result<U, E>)` | `List<T>` | `List<U>` | Applies `f`, keeps only `Ok` values, discards errors |
+| `indexOf(item: T)` | `List<T>` | `Option<Int>` | Returns `Some(index)` of first match, or `None` |
+| `firstWhere(f: fn(T): Bool)` | `List<T>` | `Option<T>` | Returns `Some(first element)` where `f` is true, or `None` |
+
+```vertex
+let xs: List<Int> = [1, 2, 3, 4, 5]
+
+let doubled = xs.map(fn(n) { n * 2 })              // (2, 4, 6, 8, 10)
+let evens   = xs.filter(fn(n) { n % 2 == 0 })      // (2, 4)
+let sum     = xs.fold(0, fn(acc, n) { acc + n })    // 15
+let hasOdd  = xs.any(fn(n) { n % 2 != 0 })         // true
+let allPos  = xs.all(fn(n) { n > 0 })              // true
+
+// Safe index access
+let assert Some(value: third) = xs.get(2)          // third == 3
+let missing = xs.get(99)                            // None
+
+// enumerate: iterate with index
+let words: List<String> = ["a", "b", "c"]
+for #(i, w) in words.enumerate() {
+    debug i    // 0, 1, 2
+}
+```
+
+### Factory functions
+
+| Signature | Returns | Notes |
+|-----------|---------|-------|
+| `List.generate(count: Int, f: fn(Int): T)` | `List<T>` | Calls `f` with each zero-based index `0..count-1`. `count ≤ 0` returns `[]`. |
+| `List.filled(count: Int, value: T)` | `List<T>` | Creates `count` copies of `value`. `count ≤ 0` returns `[]`. Note: all entries reference the same object — use `List.generate` for independent instances. |
+
+```vertex
+// Unique items using the index:
+let squares: List<Int> = List.generate(5, fn(i: Int): Int { i * i })
+// squares == (0, 1, 4, 9, 16)
+
+// Repeated sentinel value:
+let zeros: List<Int> = List.filled(4, 0)
+// zeros == (0, 0, 0, 0)
+```
+
+---
+
+## `Map<K, V>`
+
+```vertex
+let scores: Map<String, Int> = {"Alice": 95, "Bob": 87}
+let empty: Map<String, Int> = Map.empty()
+```
+
+There is no subscript syntax (`map["key"]`). Use `get(key)` for key access, which
+returns `Option<V>`.
+
+### Instance methods
+
+| Method | Receiver | Returns | Notes |
+|--------|----------|---------|-------|
+| `size()` | `Map<K,V>` | `Int` | Number of key-value pairs |
+| `isEmpty()` | `Map<K,V>` | `Bool` | `true` when the map has zero entries |
+| `containsKey(key: K)` | `Map<K,V>` | `Bool` | `true` if the key exists |
+| `get(key: K)` | `Map<K,V>` | `Option<V>` | `Some(value)` if found, `None` otherwise |
+| `put(key: K, value: V)` | `Map<K,V>` | `Map<K,V>` | Pure — returns a new map with the key set |
+| `remove(key: K)` | `Map<K,V>` | `Map<K,V>` | Pure — returns a new map without the key |
+| `keys()` | `Map<K,V>` | `List<K>` | All keys as a list |
+| `values()` | `Map<K,V>` | `List<V>` | All values as a list |
+| `entries()` | `Map<K,V>` | `List<#(K, V)>` | Key-value pairs as a list of tuples |
+
+### Factory functions
+
+`Map.empty()` — creates an empty map. A type annotation is required:
+
+```vertex
+let m: Map<String, Int> = Map.empty()
+```
+
+`Map.fromList(list: List<#(K, V)>): Map<K, V>` — constructs a map from a list of key-value tuple pairs.
+If the list contains duplicate keys, the **last** entry wins.
+
+```vertex
+let m: Map<String, Int> = Map.fromList([#("a", 1), #("b", 2)])
+
+// Round-trip with entries():
+let original: Map<String, Int> = {"x": 10, "y": 20}
+let copy: Map<String, Int> = Map.fromList(original.entries())
+```
+
+### Iteration
+
+```vertex
+for k in scores.keys() {
+    debug k
+}
+
+for #(key, value) in scores.entries() {
+    debug "${key}: ${value}"
+}
+```
+
+---
+
+## `Set<T>`
+
+```vertex
+let tags: Set<String> = #{"apex", "salesforce"}
+```
+
+Sets are immutable; all mutating methods return a new `Set<T>`.
+
+### Instance methods
+
+| Method | Receiver | Returns | Description |
+|--------|----------|---------|-------------|
+| `size()` | `Set<T>` | `Int` | Number of elements |
+| `isEmpty()` | `Set<T>` | `Bool` | `true` if the set has no elements |
+| `contains(item: T)` | `Set<T>` | `Bool` | `true` if `item` is in the set |
+| `add(item: T)` | `Set<T>` | `Set<T>` | New set with `item` included |
+| `remove(item: T)` | `Set<T>` | `Set<T>` | New set with `item` excluded |
+| `toList()` | `Set<T>` | `List<T>` | Converts to a list (order unspecified) |
+| `map(fn: T -> U)` | `Set<T>` | `Set<U>` | Transforms each element with `fn` |
+| `filter(fn: T -> Bool)` | `Set<T>` | `Set<T>` | Keeps elements for which `fn` returns `true` |
+| `union(other: Set<T>)` | `Set<T>` | `Set<T>` | All elements from both sets |
+| `intersection(other: Set<T>)` | `Set<T>` | `Set<T>` | Elements present in both sets |
+| `difference(other: Set<T>)` | `Set<T>` | `Set<T>` | Elements in receiver but not in `other` |
+
+```vertex
+let nums: Set<Int> = #{1, 2, 3}
+debug nums.size()              // 3
+debug nums.contains(2)         // true
+let s2 = nums.add(4)
+debug s2.size()                // 4
+let evens = nums.filter(fn(x: Int): Bool { x % 2 == 0 })
+debug evens.size()             // 1
+let u = #{1, 2}.union(#{2, 3, 4})
+debug u.size()                 // 4
+let inter = #{1, 2, 3}.intersection(#{2, 3, 4})
+debug inter.size()             // 2
+let diff = #{1, 2, 3}.difference(#{2, 3})
+debug diff.size()              // 1
+```

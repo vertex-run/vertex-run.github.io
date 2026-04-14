@@ -1,0 +1,58 @@
+---
+title: Result and Closures
+description: A complete example combining Result error handling, the ? operator, and first-class functions.
+---
+
+A complete example combining `Result` error handling, the `?` propagation operator,
+and first-class functions (closures and `make_adder`).
+
+```vertex
+fn validate_age(
+    age: Int,
+): Result<Int, String> {
+    if age < 0 {
+        Error("age cannot be negative")
+    } else if age > 150 {
+        Error("age is unrealistically large")
+    } else {
+        Ok(age)
+    }
+}
+
+fn label_age(
+    age: Int,
+): String {
+    if age < 18 { "minor" } else { "adult" }
+}
+
+fn process_age(
+    raw: Int,
+): Result<String, String> {
+    result {
+        let age = validate_age(raw)?
+        Ok(label_age(age) + " (age " + age + ")")
+    }
+}
+
+fn make_adder(
+    base: Int,
+): fn(Int): Int {
+    fn(x: Int): Int { base + x }
+}
+
+debug match process_age(25) {
+    Ok(s)    => s,
+    Error(e) => "invalid: " + e,
+}  // "adult (age 25)"
+
+let add10 = make_adder(10)
+debug add10(5)    // 15
+debug 5 |> add10  // 15
+```
+
+Key concepts demonstrated:
+- `Result<T, E>` for error handling without exceptions
+- `?` operator for early error propagation inside a `result {}` block
+- Closures capturing their enclosing scope (`base` in `make_adder`)
+- `|>` pipe operator as an alternative to function call syntax
+- `match` on a `Result` to handle both cases

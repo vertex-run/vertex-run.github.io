@@ -1,0 +1,62 @@
+---
+title: DateFormat
+description: Formatting Date and Datetime values as strings using DateFormat in Vertex.
+sidebar:
+  order: 5
+---
+
+`DateFormat` is a built-in opaque type that describes how to render a `Date` or `Datetime`
+as a `String`. Values are created via named factory constructors or the `custom` escape hatch.
+`DateFormat` values may be stored in variables and passed around freely.
+
+## Named constructors
+
+Each constructor produces a locale-specific pattern using en_US conventions.
+
+| Constructor              | Example output            | Pattern (en_US)         |
+|--------------------------|---------------------------|-------------------------|
+| `DateFormat.yMd()`       | `3/15/2024`               | `M/d/y`                 |
+| `DateFormat.yMMMd()`     | `Mar 15, 2024`            | `MMM d, y`              |
+| `DateFormat.yMMMMd()`    | `March 15, 2024`          | `MMMM d, y`             |
+| `DateFormat.yMMMMEEEEd()`| `Friday, March 15, 2024`  | `EEEE, MMMM d, y`       |
+| `DateFormat.yMMMEd()`    | `Fri, Mar 15, 2024`       | `EEE, MMM d, y`         |
+| `DateFormat.MMMd()`      | `Mar 15`                  | `MMM d`                 |
+| `DateFormat.MMMMd()`     | `March 15`                | `MMMM d`                |
+| `DateFormat.MMMMEEEEd()` | `Friday, March 15`        | `EEEE, MMMM d`          |
+| `DateFormat.yMMM()`      | `Mar 2024`                | `MMM y`                 |
+| `DateFormat.yMMMM()`     | `March 2024`              | `MMMM y`                |
+| `DateFormat.yM()`        | `3/2024`                  | `M/y`                   |
+| `DateFormat.y()`         | `2024`                    | `y`                     |
+| `DateFormat.jm()`        | `10:30 AM`                | `h:mm a`                |
+| `DateFormat.jms()`       | `10:30:00 AM`             | `h:mm:ss a`             |
+| `DateFormat.Hm()`        | `10:30`                   | `HH:mm`                 |
+| `DateFormat.Hms()`       | `10:30:00`                | `HH:mm:ss`              |
+
+## Custom patterns
+
+`DateFormat.custom(pattern: String)` accepts a raw Java `SimpleDateFormat` pattern string.
+
+```vertex
+dt.format(DateFormat.custom(pattern: "yyyy-MM-dd"))   // 2024-03-15
+d.format(DateFormat.custom(pattern: "dd/MM/yyyy"))    // 15/03/2024
+```
+
+The `pattern:` argument is required and must be labeled.
+
+## Usage
+
+```vertex
+let dt = Datetime.of(year: 2024, month: 3, day: 15, hour: 10, minute: 30, second: 0)
+let d  = Date.of(year: 2024, month: 3, day: 15)
+
+debug dt.format(DateFormat.yMMMd())                          // Mar 15, 2024
+debug dt.format(DateFormat.yMMMMEEEEd())                     // Friday, March 15, 2024
+debug dt.format(DateFormat.Hms())                            // 10:30:00
+debug dt.format(DateFormat.custom(pattern: "yyyy-MM-dd"))   // 2024-03-15
+
+debug d.format(DateFormat.MMMd())                            // Mar 15
+debug d.format(DateFormat.yMMM())                            // Mar 2024
+```
+
+`format` always returns `String`. Format patterns are programmer-written source code, not
+user input, so failures are considered programmer error rather than something to handle at runtime.

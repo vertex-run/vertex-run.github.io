@@ -1,0 +1,115 @@
+---
+title: Collections
+description: Working with List, Map, and Set in Vertex.
+sidebar:
+  order: 7
+---
+
+Vertex has three built-in collection types: `List<T>`, `Map<K, V>`, and `Set<T>`.
+
+## List
+
+Lists are the most common collection. They are ordered and generic:
+
+```vertex
+let names: List<String> = ["Alice", "Bob", "Carol"]
+let empty: List<String> = []
+
+debug names.size()      // 3
+debug names.isEmpty()   // false
+```
+
+### Transforming lists
+
+```vertex
+let numbers: List<Int> = [1, 2, 3, 4, 5]
+
+let doubled = numbers.map(fn(n) { n * 2 })          // [2, 4, 6, 8, 10]
+let evens   = numbers.filter(fn(n) { n % 2 == 0 })  // [2, 4]
+let sum     = numbers.fold(0, fn(acc, n) { acc + n }) // 15
+```
+
+### Safe access
+
+There is no subscript syntax (`list[i]`). Index access returns `Option<T>`:
+
+```vertex
+let xs = [10, 20, 30]
+debug xs.get(1)    // Some(20)
+debug xs.get(99)   // None
+debug xs.first()   // Some(10)
+debug xs.last()    // Some(30)
+```
+
+### Spread to combine
+
+```vertex
+let a = [1, 2, 3]
+let b = [4, 5, 6]
+let combined = [...a, ...b, 7]   // [1, 2, 3, 4, 5, 6, 7]
+```
+
+### Iterating with `for..in`
+
+```vertex
+for name in names {
+    debug name
+}
+
+// With index
+for #(i, name) in names.enumerate() {
+    debug "${i}: ${name}"
+}
+```
+
+### Factories
+
+```vertex
+let squares = List.generate(5, fn(i: Int): Int { i * i })
+// [0, 1, 4, 9, 16]
+
+let zeros = List.filled(4, 0)
+// [0, 0, 0, 0]
+```
+
+## Map
+
+Maps are key-value stores. There is no subscript syntax — use `get(key)`:
+
+```vertex
+let scores: Map<String, Int> = {"Alice": 95, "Bob": 87}
+let empty: Map<String, Int> = Map.empty()
+
+debug scores.get("Alice")   // Some(95)
+debug scores.get("Carol")   // None
+
+let updated = scores.put("Carol", 92)    // returns a new map — original unchanged
+for #(name, score) in updated.entries() {
+    debug "${name}: ${score}"
+}
+```
+
+## Set
+
+Sets are unordered collections with no duplicates, using `#{}` literal syntax:
+
+```vertex
+let tags: Set<String> = #{"apex", "salesforce", "vertex"}
+
+debug tags.contains("apex")   // true
+debug tags.size()              // 3
+
+let extended = tags.add("Dart")
+let filtered = tags.filter(fn(t) { t.length() > 4 })
+
+let a = #{1, 2, 3}
+let b = #{3, 4, 5}
+debug a.union(b)              // #{1, 2, 3, 4, 5}
+debug a.intersection(b)       // #{3}
+debug a.difference(b)         // #{1, 2}
+```
+
+## Next steps
+
+- [Collections reference](/reference/collections/) — full method tables for List, Map, Set
+- [for..in Loop](/reference/for-in/) — pattern destructuring in loop heads

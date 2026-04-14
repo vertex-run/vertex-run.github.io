@@ -1,0 +1,16 @@
+---
+title: String Interpolation
+description: Embedding expressions inside string literals in Vertex.
+sidebar:
+  order: 2
+---
+
+Any expression is valid inside `${}`:
+
+```vertex
+let name = "Alice"
+let greeting = "Hello, ${name}!"
+let product_msg = "${a} * ${b} = ${a * b}"
+```
+
+Escape sequences: `\"`, `\\`, `\n`, `\r`, `\t`, `\$`.

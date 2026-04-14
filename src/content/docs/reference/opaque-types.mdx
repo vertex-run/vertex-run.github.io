@@ -1,0 +1,80 @@
+---
+title: Opaque Types
+description: Encapsulated sum types whose internals are hidden from importing modules.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+A `pub opaque type` is a sum type whose **constructors, fields, and variant
+patterns are private to its defining module**. Outside that module the type is
+visible and can be used in annotations, as function parameters, and as return
+types, but callers cannot inspect or construct its internal representation
+directly.
+
+```vertex
+// in module user_ids.vtx
+pub opaque type UserId { UserId(value: String) }
+
+// Smart constructor — the only public way to create a UserId.
+pub fn make(s: String): UserId { UserId(value: s) }
+
+// Public accessor — exposes the value without leaking the constructor.
+pub fn unwrap(uid: UserId): String {
+    match uid {
+        UserId(value: v) => v,
+    }
+}
+```
+
+### What is restricted outside the defining module
+
+| Operation | Error |
+|-----------|-------|
+| `UserId(value: "x")` — variant constructor call | `E127` |
+| `uid.value` — field access | `E128` |
+| `match uid { UserId(value: v) => v }` — variant pattern | `E129` |
+| Record update syntax on the opaque type | `E130` |
+
+### What is allowed outside the defining module
+
+- Using the type in annotations: `fn foo(uid: UserId): UserId`
+- Passing values through: `fn passThrough(uid: UserId): UserId { uid }`
+- Wildcard match: `match uid { _ => 0 }`
+- Calling the module's public smart constructors and accessors
+
+```vertex
+// in module consumer.vtx
+import user_ids.{UserId, make, unwrap}
+
+fn run(): String {
+    let uid = make("abc")   // OK — uses the smart constructor
+    unwrap(uid)             // OK — uses the public accessor
+}
+
+fn bad(): UserId { UserId(value: "x") }  // E127
+fn bad2(uid: UserId): String { uid.value }  // E128
+```
+
+### Exhaustiveness
+
+Because variant internals are hidden, `match` on an opaque type from outside
+its defining module requires a **wildcard arm** (`_ => ...`). Any variant
+pattern arm will be rejected with `E129`, and a match with no wildcard and no
+valid arms is non-exhaustive (`E105`).
+
+```vertex
+// OK — wildcard covers the opaque type
+match uid {
+    _ => "some value",
+}
+```
+
+### Syntax
+
+`opaque` is only valid in combination with `pub`:
+
+```
+pub opaque type Name { ... }   // OK
+opaque type Name { ... }       // parse error — opaque requires pub
+pub opaque fn foo() {}         // parse error — opaque only applies to types
+```

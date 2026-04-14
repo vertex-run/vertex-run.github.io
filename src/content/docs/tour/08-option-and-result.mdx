@@ -1,0 +1,122 @@
+---
+title: Option and Result
+description: Handling absence and failure safely with Option<T> and Result<T, E> in Vertex.
+sidebar:
+  order: 8
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## No null — use `Option<T>`
+
+Vertex has no `null`. Absence of a value is expressed as `Option<T>`, which is a sum type with two variants:
+
+- `Some(value)` — a value is present
+- `None` — no value
+
+```vertex
+fn find_user(id: Int): Option<String> {
+    if id == 1 { Some("Alice") } else { None }
+}
+
+match find_user(42) {
+    Some(name) => debug "Found: ${name}",
+    None       => debug "Not found",
+}
+```
+
+### Working with Option
+
+```vertex
+let name = find_user(1)
+
+// Unwrap with a default
+let n: String = name.unwrapOr("anonymous")
+
+// Transform if present
+let upper = name.map(fn(s: String): String { s.toUpperCase() })
+
+// Pipeline
+let label = name
+    .map(fn(s: String): String { "Hello, " + s })
+    .unwrapOr("Hello, stranger")
+
+// Convert to Result
+let result = name.toResult("user not found")
+```
+
+## No exceptions — use `Result<T, E>`
+
+Vertex has no `throw`/`try`/`catch`. Fallible operations return `Result<T, E>`:
+
+- `Ok(value)` — success
+- `Error(e)` — failure
+
+```vertex
+fn safe_divide(a: Int, b: Int): Result<Int, String> {
+    if b == 0 {
+        Error("cannot divide by zero")
+    } else {
+        Ok(a / b)
+    }
+}
+
+match safe_divide(10, 2) {
+    Ok(v)    => debug "result: ${v}",
+    Error(e) => debug "error: ${e}",
+}
+```
+
+### The `?` operator
+
+`?` is the error propagation operator. Apply it to a `Result<T, E>` expression:
+- `Ok(value)` → unwraps to `value`, execution continues
+- `Error(e)` → immediately returns `Error(e)` from the enclosing function
+
+```vertex
+fn validate_age(age: Int): Result<Int, String> {
+    if age < 0 { Error("age cannot be negative") } else { Ok(age) }
+}
+
+fn process(raw: Int): Result<String, String> {
+    let age = validate_age(raw)?   // propagates Error if validation fails
+    Ok(if age < 18 { "minor" } else { "adult" })
+}
+
+debug match process(25)  { Ok(s)    => s,             Error(e) => "invalid: " + e }  // adult
+debug match process(-1)  { Ok(s)    => s,             Error(e) => "invalid: " + e }  // invalid: age cannot be negative
+```
+
+<Aside type="tip">
+The `?` operator is the Vertex equivalent of Rust's `?` / F#'s `!`. It eliminates the boilerplate of manually matching and re-wrapping error results.
+</Aside>
+
+### Combinators
+
+```vertex
+let r: Result<Int, String> = safe_divide(10, 2)
+
+let doubled = r.map(fn(x: Int): Int { x * 2 })             // Result<Int, String>
+let remapped = r.mapError(fn(e: String): Int { e.length() }) // Result<Int, Int>
+let final = r.flatMap(fn(x: Int): Result<Int, String> { Ok(x + 1) }).unwrapOr(0)
+let opt = r.toOption()   // Option<Int>
+```
+
+## Optional fields in constructors
+
+Any field typed `Option<T>` in a constructor can be omitted — it defaults to `None`:
+
+```vertex
+type Contact {
+    Contact(name: String, phone: Option<String>)
+}
+
+let c1 = Contact(name: "Alice")                       // phone: None
+let c2 = Contact(name: "Bob", phone: Some("+1 555"))  // phone: Some
+```
+
+## Next steps
+
+- [Option\<T\> reference](/reference/option/)
+- [Result\<T, E\> reference](/reference/result/)
+- [Pattern Matching](/reference/pattern-matching/) — match on both types

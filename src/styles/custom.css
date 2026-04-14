@@ -1,0 +1,17 @@
+/* Custom Vertex brand colors */
+:root {
+  --sl-color-accent-low: #1e1b4b;
+  --sl-color-accent: #6366f1;
+  --sl-color-accent-high: #a5b4fc;
+}
+
+:root[data-theme='light'] {
+  --sl-color-accent-low: #eef2ff;
+  --sl-color-accent: #4f46e5;
+  --sl-color-accent-high: #312e81;
+}
+
+/* Tighten code block padding slightly */
+.expressive-code pre {
+  padding-block: 0.75rem;
+}

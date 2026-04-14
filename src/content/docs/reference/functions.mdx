@@ -1,0 +1,196 @@
+---
+title: Functions
+description: Module-level functions, closures, higher-order functions, and the pipe operator in Vertex.
+---
+
+### Module-level declarations
+
+```vertex
+fn add(
+    a: Int,
+    b: Int,
+): Int {
+    a + b
+}
+```
+
+- The last expression in the body is the return value.
+- Explicit `return` is for early exits only.
+- All module-level `fn` declarations are hoisted — mutual recursion works.
+- Trailing commas are allowed in parameter lists and argument lists.
+
+### Return type inference
+
+The return type annotation is **optional** on private functions. When omitted,
+the compiler infers it from the body:
+
+```vertex
+fn add(a: Int, b: Int) { a + b }        // inferred: Int
+fn greet(name: String) { "Hello" }      // inferred: String
+fn noop() { }                           // inferred: Void
+```
+
+**`pub fn` must always have an explicit return type.** This keeps module
+boundaries explicit and self-documenting:
+
+```vertex
+pub fn run(): Void { ... }   // OK — explicit
+pub fn bad() { ... }         // Error E135: pub fn missing return type
+```
+
+If two private functions with omitted return types reference each other (mutual
+recursion with both unannotated), the compiler emits **E136** and requires at
+least one of them to carry an explicit annotation.
+
+### Named arguments at the call site
+
+```vertex
+let r = add(a: 1, b: 2)   // named
+let r = add(1, 2)          // positional
+```
+
+### Default parameter values
+
+```vertex
+fn greet(
+    name: String,
+    prefix: String = "Hello",
+): String {
+    "${prefix}, ${name}!"
+}
+```
+
+### Parameter destructuring
+
+A parameter may be a pattern instead of a plain name. The pattern is bound
+at the start of the function body, exactly like a `let` destructuring.
+
+**Variant / record destructuring:**
+
+```vertex
+type Point { Point(x: Double, y: Double) }
+
+fn distanceFromOrigin(Point(x:, y:): Point): Double {
+    (x * x + y * y).sqrt()
+}
+```
+
+**Tuple destructuring:**
+
+```vertex
+fn addPair(#(a, b): #(Int, Int)): Int {
+    a + b
+}
+```
+
+Mixed plain and destructured parameters are allowed:
+
+```vertex
+fn scale(n: Double, Point(x:, y:): Point): Double {
+    let sum = x + y
+    n * sum
+}
+```
+
+**Restrictions:**
+- Destructured parameters are **positional only** — they have no call-site label and cannot be passed by name.
+- Default values (`= expr`) are not allowed on destructured parameters.
+- Closures do not support parameter destructuring; use a `let` binding inside the body instead.
+
+### Closures / anonymous functions
+
+```vertex
+let add5 = fn(
+    x: Int,
+): Int { x + 5 }
+
+fn make_adder(
+    base: Int,
+): fn(Int): Int {
+    fn(
+        x: Int,
+    ): Int { base + x }
+}
+```
+
+Closures are first-class values. They capture their enclosing lexical environment.
+
+### Higher-order functions
+
+```vertex
+fn apply(
+    f: fn(Int): Int,
+    v: Int,
+): Int { f(v) }
+
+fn compose(
+    f: fn(Int): Int,
+    g: fn(Int): Int,
+): fn(Int): Int {
+    fn(
+        x: Int,
+    ): Int { f(g(x)) }
+}
+```
+
+### Function type aliases
+
+Use `type` to give a name to a function type:
+
+```vertex
+type IntOp = fn(Int): Int
+type Predicate = fn(Int): Bool
+
+fn apply_op(f: IntOp, x: Int): Int { f(x) }
+fn apply_pred(p: Predicate, x: Int): Bool { p(x) }
+```
+
+Generic function type aliases are supported:
+
+```vertex
+type Transform<A, B> = fn(A): B
+
+fn apply(f: Transform<Int, String>, x: Int): String { f(x) }
+```
+
+Aliases are **transparent**: `fn(Int): Int` and `IntOp` are interchangeable.
+Function type aliases are compile-time only — they have no representation in generated Apex.
+
+### `|>` pipe operator
+
+Passes the left value as the **first argument** of the right-hand function:
+
+```vertex
+debug 3 |> double           // 6
+debug 3 |> double |> inc    // 7
+debug 4 |> square |> double // 32
+```
+
+Use `_` as a placeholder to control where the piped value lands:
+
+```vertex
+fn add(a: Int, b: Int): Int { a + b }
+fn mul(a: Int, b: Int): Int { a * b }
+
+debug 2 |> add(_, 3)                // 5  — same as add(2, 3)
+debug 2 |> add(_, 3) |> mul(10, _)  // 50 — mul(10, add(2, 3))
+
+fn greet(greeting: String, name: String): String {
+    greeting + ", " + name + "!"
+}
+debug "world" |> greet("Hello", _)  // Hello, world!
+```
+
+Without `_`, the piped value is prepended as the first argument. With `_`, the
+piped value replaces each `_` in the argument list and no implicit prepend occurs.
+
+### Generic functions
+
+```vertex
+fn identity<T>(
+    x: T,
+): T { x }
+fn first<T>(
+    items: List<T>,
+): Option<T> { ... }
+```

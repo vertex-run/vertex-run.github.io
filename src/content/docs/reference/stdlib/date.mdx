@@ -1,0 +1,56 @@
+---
+title: Date
+description: The Date type — calendar dates with no time or timezone component.
+sidebar:
+  order: 3
+---
+
+`Date` represents a calendar date (year, month, day) with no time or timezone component.
+
+## Factory methods
+
+| Factory                       | Returns        | Notes                                   |
+|-------------------------------|----------------|-----------------------------------------|
+| `Date.of(year, month, day)`   | `Date`         | All args `Int`                          |
+| `Date.today()`                | `Date`         | Current local date                      |
+| `Date.parse(s: String)`       | `Option<Date>` | Accepts `yyyy-MM-dd` only; `None` on invalid input |
+
+## Instance methods
+
+| Method                                         | Returns    | Notes                                                        |
+|------------------------------------------------|------------|--------------------------------------------------------------|
+| `.year()`                                      | `Int`      |                                                              |
+| `.month()`                                     | `Int`      |                                                              |
+| `.day()`                                       | `Int`      |                                                              |
+| `.toDatetime()`                                | `Datetime` | Midnight on that date (local time)                           |
+| `.toString()`                                  | `String`   | Format: `yyyy-MM-dd 00:00:00` (matches `System.debug(Date)`) |
+| `.add(years:, months:, days:)`                 | `Date`     | All args optional (default 0), at least one required. Negative values subtract. Month-end clamping applied. |
+| `.daysUntil(other: Date)`                      | `Int`      | Whole calendar days from `self` to `other`. Positive when `other` is later, negative when earlier. |
+| `.format(DateFormat)`                          | `String`   | Format the date using a `DateFormat` value. |
+
+## Parsing
+
+`Date.parse(s: String)` returns `Option<Date>`. Only the format `yyyy-MM-dd` is accepted
+(matching Apex's `Date.valueOf`). Any other format returns `None`.
+
+```vertex
+let d = Date.parse(s: "2024-03-15")   // Some(Date)
+let x = Date.parse(s: "15/03/2024")   // None
+```
+
+## Arithmetic
+
+`date.add(...)` returns a new `Date` shifted by the given calendar units. All parameters are
+labeled; any subset may be provided (at least one required). Negative values subtract:
+
+```vertex
+date.add(days: 7)                    // + 7 days
+date.add(months: -1)                 // - 1 month
+date.add(years: 1, months: 2, days: 3)
+```
+
+Month-end clamping: `Date.of(year: 2024, month: 1, day: 31).add(months: 1)` → `2024-02-29`.
+
+## Operators
+
+`==`, `!=`, `<`, `<=`, `>`, `>=` — direct date comparison.

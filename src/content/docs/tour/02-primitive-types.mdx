@@ -1,0 +1,88 @@
+---
+title: Primitive Types
+description: Vertex's built-in types — numbers, booleans, strings, and Void.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Vertex has eight built-in types:
+
+| Type      | Literal                         | Example    |
+|-----------|---------------------------------|------------|
+| `Int`     | plain integer                   | `42`       |
+| `Long`    | integer with `L` suffix         | `100L`     |
+| `Double`  | decimal point, no suffix        | `3.14`     |
+| `Decimal` | decimal with `d` suffix         | `9.99d`    |
+| `Bool`    | `true` or `false`               | `true`     |
+| `String`  | double-quoted                   | `"hello"`  |
+| `Id`      | no literal — comes from Salesforce DML | —   |
+| `Void`    | the keyword `Void`              | `Void`     |
+
+## Numbers
+
+```vertex
+let age: Int = 30
+let population: Long = 8_000_000_000L
+let price: Decimal = 19.99d
+let ratio: Double = 0.75
+
+debug age + 5          // 35
+debug price * 2.0d     // 39.98
+```
+
+<Aside type="caution">
+**No implicit widening.** Both sides of an arithmetic expression must be the same numeric type. `42 + 3.14` is a compile error — you must explicitly convert first.
+</Aside>
+
+## Strings
+
+Strings use double quotes and support interpolation:
+
+```vertex
+let name = "Alice"
+let age = 30
+debug "Hello, ${name}! You are ${age} years old."
+```
+
+Any expression is valid inside `${}`:
+
+```vertex
+debug "${2 + 2}"        // 4
+debug "area: ${3.14 * 5.0 * 5.0}"
+```
+
+`String +` coerces the right-hand side automatically:
+
+```vertex
+debug "count: " + 42   // "count: 42"
+```
+
+## Void
+
+`Void` is a first-class value — not just an absence of a return type. A function
+that only performs side effects declares `: Void` and ends with `Void` as its
+last expression:
+
+```vertex
+fn log(message: String): Void {
+    debug message
+    Void
+}
+```
+
+## Type annotations
+
+Type annotations on local bindings are optional when the type can be inferred:
+
+```vertex
+let x = 42          // Int, inferred
+let y: Int = 42     // Int, explicit — same thing
+```
+
+## Next steps
+
+- [Primitive Types reference](/reference/basics/primitive-types/)
+- [String Interpolation](/reference/expressions/string-interpolation/)
+- [Operators](/reference/expressions/operators/)

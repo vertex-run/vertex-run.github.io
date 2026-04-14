@@ -1,0 +1,21 @@
+---
+title: Tuples
+description: Fixed-size heterogeneous tuples using the #(...) syntax in Vertex.
+---
+
+```vertex
+let point = #(1.0, 2.0)
+let #(x, y) = point         // destructuring in let
+let #(_, y) = point         // ignore first element
+```
+
+Tuples use `#(...)` syntax. Destructuring is supported in `let` bindings,
+`for` loop heads, and `match` expressions:
+
+```vertex
+fn describe(p: #(Int, Int)): String {
+  match p {
+    #(x, y) => "x=" + x.toString() + ", y=" + y.toString(),
+  }
+}
+```

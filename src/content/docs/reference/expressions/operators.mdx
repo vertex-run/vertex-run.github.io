@@ -1,0 +1,36 @@
+---
+title: Operators
+description: Arithmetic, comparison, logical, and unary operators in Vertex.
+sidebar:
+  order: 1
+---
+
+### Arithmetic
+
+| Operator | Supported types                               |
+|----------|-----------------------------------------------|
+| `+`      | `Int`, `Long`, `Double`, `Decimal`, `String`  |
+| `-`, `*` | `Int`, `Long`, `Double`, `Decimal`            |
+| `/`      | `Int` (truncating), `Long` (truncating), `Double`, `Decimal` |
+| `%`      | `Int`, `Long`                                 |
+
+No implicit widening — both sides must be the same numeric type.
+
+`String + <any>` is valid: the right-hand side is coerced to `String` automatically.
+
+```vertex
+"adult (age " + age + ")"   // age is an Int — coerced automatically
+```
+
+### Comparison
+
+`==`, `!=`, `<`, `<=`, `>`, `>=` — work on all numeric types and on `Bool`/`String`
+for equality.
+
+### Logical
+
+`&&`, `||` (both short-circuit), `!` (unary).
+
+### Unary
+
+`-` (numeric negation), `!` (boolean negation).

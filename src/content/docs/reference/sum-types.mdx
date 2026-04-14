@@ -1,0 +1,75 @@
+---
+title: Sum Types
+description: Algebraic sum types (tagged unions) in Vertex, declared with the type keyword.
+---
+
+Declared with the `type` keyword. Each variant may carry named fields or no fields
+(unit variant).
+
+```vertex
+type Direction {
+    North,
+    South,
+    East,
+    West,
+}
+
+type Shape {
+    Circle(radius: Double),
+    Rectangle(width: Double, height: Double),
+    Triangle(base: Double, height: Double),
+}
+```
+
+### Constructing variants
+
+```vertex
+let c  = Circle(
+    radius: 5.0,
+)              // named fields
+let c2 = Circle(
+    5.0,
+)                      // positional (declaration order)
+let n  = North                            // unit variant — no parentheses
+```
+
+Unit variants are referenced by name alone. Writing `North()` is a compile
+error — there is only one way to construct a unit variant.
+
+No type qualifier is needed — variant names are globally unique in a module.
+
+### Field access on known variants
+
+When the static type is a specific variant (not the erased parent type), direct
+field access is valid without `match`:
+
+```vertex
+let c = Circle(
+    radius: 5.0,
+)
+debug c.radius     // 5.0
+```
+
+### Field access on the parent type (common fields)
+
+When **every** variant of a sum type carries a field with the same name and type,
+that field can be accessed directly on a value of the parent type without `match`:
+
+```vertex
+type TicketBundle {
+    VIP(price: Int, available: Int, perks: String),
+    Bleachers(price: Int, available: Int),
+    GeneralAdmission(price: Int, available: Int),
+}
+
+fn bundleAvailable(b: TicketBundle): Int {
+    b.available   // valid — all variants have 'available: Int'
+}
+
+fn bundlePrice(b: TicketBundle): Int {
+    b.price       // valid — all variants have 'price: Int'
+}
+```
+
+If any variant is missing the field (including unit variants), the access is a
+compile error. Use `match` in that case.

@@ -1,0 +1,26 @@
+---
+title: Constants
+description: Module-level constants in Vertex.
+sidebar:
+  order: 5
+---
+
+Module-level constants are declared with `const`. Their values must be scalar
+literals (no function calls or references to other constants).
+
+```vertex
+const max_retries = 3
+const api_version: String = "v2"
+pub const discount_rate = 10    // visible to importers
+```
+
+- Constants are **always immutable** — no `mutable` qualifier is allowed.
+- The type is inferred from the literal unless an explicit annotation is given.
+- Public constants (`pub const`) are exported in the module signature and can
+  be imported with `import module.{ constant_name }`.
+- In class-file Apex codegen, constants emit as `[public|private] final static Type name = value;`.
+- In anonymous Apex, constants emit as `final Type name = value;` at the top
+  of the block, before any body statements.
+
+**Allowed literal types:** `Int`, `Long`, `Double`, `Decimal`, `Bool`, `String`.
+String interpolation is not permitted in constant strings.

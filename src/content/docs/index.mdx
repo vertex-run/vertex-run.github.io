@@ -1,0 +1,89 @@
+---
+title: Introduction
+description: Vertex — a statically typed language that compiles to Salesforce Apex.
+template: splash
+hero:
+  title: Vertex
+  tagline: A statically typed language that compiles to Salesforce Apex. Safer, more ergonomic, locally runnable.
+  actions:
+    - text: Language Tour
+      link: /tour/01-hello-world/
+      icon: right-arrow
+      variant: primary
+    - text: Reference
+      link: /reference/basics/running-vertex/
+      icon: open-book
+---
+
+import { Card, CardGrid, Aside } from '@astrojs/starlight/components';
+
+<CardGrid>
+  <Card title="Errors are values" icon="warning">
+    No exceptions in user code. All fallible functions return `Result<T, E>` and must be explicitly handled.
+  </Card>
+  <Card title="Null safety" icon="approve-check">
+    There is no `null`. Absence of a value is expressed as `Option<T>`, enforced by the compiler.
+  </Card>
+  <Card title="Immutable by default" icon="seti:lock">
+    All bindings are immutable. Mutation requires the explicit `mutable` keyword — it looks like a code smell on purpose.
+  </Card>
+  <Card title="Locally runnable" icon="laptop">
+    Build, test, and iterate without connecting to a Salesforce org. A JIT runner executes Vertex programs locally.
+  </Card>
+</CardGrid>
+
+## Philosophy
+
+1. **One way to do things.** When there are multiple ways to express the same idea, Vertex picks one and only exposes that.
+2. **Errors are values.** No exceptions in user code. Failures are expressed as `Result<T, E>` and must be explicitly handled.
+3. **Immutability by default.** Mutation is possible but visible — it looks like a code smell on purpose.
+4. **Strong FFI.** Vertex can call Apex code and Apex can call Vertex-generated code. Incremental adoption is a first-class use case.
+5. **Locally runnable.** A full Vertex project can be built, tested, and iterated on without connecting to a Salesforce org.
+
+## Influences
+
+| Language | What we take from it |
+|----------|----------------------|
+| Gleam | `Result`/`Option` types, pipe operator `\|>`, immutability, no inheritance |
+| Kotlin | Named parameters, `data class`-style records, `when` exhaustive matching |
+| TypeScript | Type inference style, string interpolation |
+| Rust | `?` error propagation operator, explicit mutability |
+| F# | Railway Oriented Programming / `result` blocks, pipeline thinking |
+| Apex | Familiar syntax baseline, `@Annotation` syntax, interface names |
+
+## What Vertex is NOT
+
+- Not a general-purpose language. It targets the Salesforce platform.
+- Not trying to replicate all of Apex. Existing Apex code stays as Apex; Vertex is for new code.
+- Not a scripting language. It is statically typed and compiled (to Apex) or JIT-executed locally.
+
+## Locked Design Decisions
+
+### Type System
+
+- **Nominal typing.** Two types are only compatible if they are explicitly declared to be so. No structural duck-typing.
+- **Strict null safety.** There is no `null`. Absence of a value is expressed as `Option<T>`.
+- **Generics** are supported.
+- **Type inference** is supported — annotations are optional on local bindings but encouraged on function signatures.
+
+### Object Model
+
+- **Classes are allowed, inheritance is not.** A class cannot extend another class.
+- **Interfaces are allowed.** A class can implement multiple interfaces.
+- **No static methods.** Class-level behavior lives as module-level functions.
+- Composition over inheritance. Shared behavior is achieved through interfaces and by passing functions/values.
+
+### Mutability
+
+All bindings are immutable by default (`let`). Mutable bindings require the explicit `mutable` keyword:
+
+```vertex
+let x = 42;              // immutable
+mutable let y = 42;      // mutable - stands out visually
+y = 100;                 // reassignment allowed
+```
+
+### Syntax
+
+- Braces `{}` for blocks. Semicolons `;` to terminate statements.
+- File = module. A file `accounts.vtx` defines the module `accounts`. No explicit module declaration needed.

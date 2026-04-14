@@ -1,0 +1,76 @@
+---
+title: Imports
+description: Vertex's file-based module system and import forms.
+---
+
+Vertex has a file-based module system: each `.vtx` file is a module. Imports
+are fully resolved by `vertex build`; `vertex run` does not support imports
+(use `vertex build` for multi-file projects).
+
+## Import forms
+
+**Bare import** — access the module's public symbols via a qualifier:
+
+```vertex
+import accounts
+import billing.invoices         // nested path: qualifier is last segment
+
+let acc = accounts.findById("001")
+let inv = billing_invoices.create()   // qualifier is the last segment
+```
+
+**Aliased import** — choose your own qualifier:
+
+```vertex
+import billing.invoices as inv
+
+let i = inv.create()
+```
+
+**Selective import** — bring specific symbols directly into scope:
+
+```vertex
+import accounts.{ findById, Account }
+
+let acc = findById("001")       // bare call, no qualifier needed
+```
+
+## Module path → Apex class name
+
+The module path maps to an Apex class name:
+
+| Module path        | Apex class name   |
+|--------------------|-------------------|
+| `accounts`         | `Accounts`        |
+| `billing/invoices` | `Billing_Invoices`|
+| `lang/greeter`     | `Lang_Greeter`    |
+
+The generated outer class always includes an Apex sharing modifier (see
+[Annotations](/reference/annotations/)). The default is `with sharing`:
+
+```apex
+public with sharing class Accounts { ... }
+public with sharing class Billing_Invoices { ... }
+```
+
+Cross-module function calls emit as `TargetClass.fnName(args)`.
+Selectively imported types emit as `TargetClass.TypeName` in Apex.
+
+## Visibility
+
+Only `pub` declarations are importable. Calling a non-`pub` symbol from
+another module is a compile error (`E124`).
+
+## Error codes
+
+| Code   | Meaning                                                        |
+|--------|----------------------------------------------------------------|
+| `E122` | Module not found (no matching `.vtx` file)                     |
+| `E123` | Symbol not found in module's public API                        |
+| `E124` | Attempted access to a private declaration                      |
+| `E125` | Cyclic import detected                                         |
+| `E126` | Name conflict: same symbol selectively imported from two modules |
+| `E127` | Variant constructor called on opaque type outside its module     |
+| `E128` | Field accessed on opaque type outside its module                 |
+| `E129` | Variant pattern matched on opaque type outside its module        |
+| `E130` | Record update used on opaque type outside its module             |

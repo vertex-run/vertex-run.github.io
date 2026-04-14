@@ -1,0 +1,106 @@
+---
+title: Functions
+description: Defining functions, named arguments, default values, closures, and the pipe operator in Vertex.
+sidebar:
+  order: 5
+---
+
+## Defining functions
+
+```vertex
+fn add(a: Int, b: Int): Int {
+    a + b
+}
+```
+
+- The last expression in the body is the return value (no `return` needed).
+- All module-level functions are hoisted — you can call them before they're defined.
+- Trailing commas are allowed in parameter lists and argument lists.
+
+## Named arguments
+
+Every parameter can be passed by name at the call site:
+
+```vertex
+fn greet(name: String, prefix: String): String {
+    "${prefix}, ${name}!"
+}
+
+debug greet(name: "Alice", prefix: "Hello")   // Hello, Alice!
+debug greet(prefix: "Hi", name: "Bob")        // Hi, Bob! — any order
+debug greet("Carol", "Hey")                   // positional also works
+```
+
+## Default parameter values
+
+```vertex
+fn greet(name: String, prefix: String = "Hello"): String {
+    "${prefix}, ${name}!"
+}
+
+debug greet(name: "Alice")              // Hello, Alice!
+debug greet(name: "Bob", prefix: "Hi") // Hi, Bob!
+```
+
+## Return type inference
+
+Private functions don't need an explicit return type — the compiler infers it from the body:
+
+```vertex
+fn double(n: Int) { n * 2 }    // inferred: Int
+fn noop() { }                   // inferred: Void
+```
+
+**`pub fn` must always have an explicit return type** — module boundaries must be self-documenting.
+
+## Closures
+
+Functions are first-class values. Anonymous functions (closures) capture their surrounding scope:
+
+```vertex
+let add5 = fn(x: Int): Int { x + 5 }
+debug add5(10)   // 15
+
+fn make_adder(base: Int): fn(Int): Int {
+    fn(x: Int): Int { base + x }   // captures 'base' from enclosing scope
+}
+
+let add10 = make_adder(10)
+debug add10(3)    // 13
+debug add10(7)    // 17
+```
+
+## The pipe operator `|>`
+
+`|>` passes the left-hand value as the first argument to the right-hand function:
+
+```vertex
+fn double(n: Int): Int { n * 2 }
+fn inc(n: Int): Int { n + 1 }
+
+debug 5 |> double          // 10
+debug 5 |> double |> inc   // 11
+```
+
+Use `_` to control where the piped value lands:
+
+```vertex
+fn add(a: Int, b: Int): Int { a + b }
+
+debug 3 |> add(_, 10)      // add(3, 10) = 13
+debug 3 |> add(10, _)      // add(10, 3) = 13
+```
+
+## Generic functions
+
+```vertex
+fn identity<T>(x: T): T { x }
+
+debug identity(42)        // 42
+debug identity("hello")   // hello
+```
+
+## Next steps
+
+- [Functions reference](/reference/functions/) — closures, destructured parameters, function type aliases
+- [Control Flow](/reference/control-flow/) — using `return` for early exit

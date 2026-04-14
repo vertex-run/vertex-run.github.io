@@ -1,0 +1,19 @@
+---
+title: Running Vertex Programs
+description: How to run Vertex programs locally and on Salesforce.
+sidebar:
+  order: 1
+---
+
+```
+dart run bin/vertex.dart run <file.vtx>
+```
+
+To compile and run on a Salesforce org:
+
+```
+dart run bin/vertex.dart run --sf --org <alias> <file.vtx>
+dart run bin/vertex.dart run --sf --org <alias> --compare <file.vtx>
+```
+
+`--compare` exits 0 only when JIT output and org output match line-for-line.

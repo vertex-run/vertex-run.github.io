@@ -1,0 +1,70 @@
+---
+title: Option<T>
+description: The Option type for representing optional values without null in Vertex.
+---
+
+`Option<T>` is a built-in sum type with two variants: `Some` and `None`.
+
+```vertex
+fn find_user(
+    id: Int,
+): Option<String> {
+    if id == 1 { Some("Alice") } else { None }
+}
+```
+
+`Some(value)` wraps a value. `None` is a unit variant — no call syntax.
+
+```vertex
+match find_user(42) {
+    Some(name) => "Hello, ${name}",
+    None       => "not found",
+}
+```
+
+### `Option<T>` fields in constructors
+
+Any field declared `Option<T>` in a variant constructor is optional at the call
+site. Omitting it is equivalent to passing `None`:
+
+```vertex
+type Contact {
+    Contact(name: String, phone: Option<String>)
+}
+
+let c = Contact(name: "Alice")               // phone defaults to None
+let c2 = Contact(name: "Bob", phone: None)   // same as above
+```
+
+Bare `None` is assignable to any `Option<T>` field regardless of `T`.
+
+### Combinator methods
+
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `isSome()` | `Option<T>` | `Bool` | `true` if this is `Some`. |
+| `isNone()` | `Option<T>` | `Bool` | `true` if this is `None`. |
+| `unwrapOr(default: T)` | `Option<T>` | `T` | Returns the inner value, or `default` if `None`. The default is always evaluated. |
+| `unwrapOrElse(f: fn(): T)` | `Option<T>` | `T` | Returns the inner value, or calls `f()` if `None`. |
+| `or(other: Option<T>)` | `Option<T>` | `Option<T>` | Returns the receiver if `Some`, otherwise `other`. |
+| `map(f: fn(T): U)` | `Option<T>` | `Option<U>` | Applies `f` to the inner value if `Some`. `None` passes through. |
+| `flatMap(f: fn(T): Option<U>)` | `Option<T>` | `Option<U>` | Applies `f` if `Some` and returns the resulting `Option` directly. |
+| `toResult(error: E)` | `Option<T>` | `Result<T,E>` | `Some(v)` → `Ok(v)`, `None` → `Error(error)`. |
+
+```vertex
+let name: Option<String> = find_user(42)
+
+// unwrap with default
+let n: String = name.unwrapOr("guest")
+
+// transform if present
+let upper: Option<String> = name.map(fn(s: String): String { s.toUpperCase() })
+
+// pipeline: map then unwrap
+let label: String = name
+    .map(fn(s: String): String { "Hello, " + s })
+    .unwrapOr("Hello, guest")
+
+// convert to Result
+let result: Result<String, String> = name.toResult("not found")
+```

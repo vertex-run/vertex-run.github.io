@@ -1,0 +1,99 @@
+---
+title: Annotations
+description: Salesforce-specific annotations in Vertex — AuraEnabled, SObject, sharing modifiers.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside>
+Annotations are Salesforce-specific. They are parsed and forwarded as-is to the
+Apex codegen. They have no JIT semantics.
+</Aside>
+
+## Module-level sharing annotations
+
+Three annotations control the Apex sharing modifier on the generated outer class.
+They are placed at the very top of a `.vtx` file, before any `import` or
+declaration:
+
+```vertex
+@WithoutSharing
+
+import lang/db
+
+pub fn run(): Void {
+    db.insertAccount(...)
+}
+```
+
+| Annotation          | Generated Apex class header                                   |
+|---------------------|---------------------------------------------------------------|
+| *(none)*            | `public with sharing class Module_Name { ... }`               |
+| `@WithSharing`      | `public with sharing class Module_Name { ... }`               |
+| `@WithoutSharing`   | `public without sharing class Module_Name { ... }`            |
+| `@InheritedSharing` | `public inherited sharing class Module_Name { ... }`          |
+
+**Default is `with sharing`** — this is the safe default per Apex security best
+practices and aligns with PMD's `ApexSharingViolations` rule.
+
+Rules:
+- At most one sharing annotation per module. A second one is an error (`E141`).
+- Sharing annotations take no arguments. Arguments are an error (`E142`).
+- Unknown module-level annotation names are an error (`E140`).
+- Sharing annotations are a no-op in JIT mode and in anonymous-Apex paths.
+- Inner classes inherit sharing from the outer class.
+
+## `@AuraEnabled` on functions
+
+Marks a function as callable from Lightning components. The function must return
+`Result<T, AuraError>`. The codegen unwraps the `Result` at the Apex boundary:
+`Ok(value)` returns `value` directly; `Error(AuraError(msg))` throws
+`new AuraHandledException(msg)`.
+
+```vertex
+@AuraEnabled
+fn getContacts(
+): Result<List<Contact>, AuraError> { ... }
+
+@AuraEnabled(cacheable: true)
+fn getAccountName(
+    id: String,
+): Result<String, AuraError> { ... }
+```
+
+## `@AuraEnabled` on types
+
+Marks a single-variant record type as an LWC data contract. The codegen emits
+`@AuraEnabled` on every field and drops `final` from fields (required for LWC
+serialization/deserialization).
+
+The type must be a single-variant record (variant name matches the type name).
+Applying `@AuraEnabled` with arguments or to a multi-variant type is an error.
+
+```vertex
+@AuraEnabled
+pub type BookDto {
+    BookDto(name: String, authorName: String, price: Decimal)
+}
+
+@AuraEnabled
+pub fn getBook(id: String): Result<BookDto, AuraError> { ... }
+```
+
+Generates:
+
+```apex
+public class BookDto {
+    @AuraEnabled
+    public String name;
+    @AuraEnabled
+    public String authorName;
+    @AuraEnabled
+    public Decimal price;
+    public BookDto(String name, String authorName, Decimal price) {
+        this.name = name;
+        this.authorName = authorName;
+        this.price = price;
+    }
+}
+```

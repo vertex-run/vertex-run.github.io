@@ -1,0 +1,270 @@
+---
+title: Apex FFI — Extern Declarations
+description: Referencing existing Apex types, methods, and fields from Vertex code.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Vertex can reference existing Apex types through `extern` declarations.
+Extern declarations are **compile-time metadata only** — they tell the type
+checker that a foreign type exists, and the codegen emits references to it
+verbatim. No Apex class is generated for an extern declaration.
+
+## `extern type` — Opaque Apex class
+
+```vertex
+extern type Messaging.SingleEmailMessage
+extern type Schema.DescribeSObjectResult
+pub extern type Limits
+```
+
+`extern type` declares an Apex class as an opaque Vertex type. The type can be
+used in parameter and return positions and as generic type arguments, but it
+has no constructors until `extern new` is declared.
+
+```vertex
+extern type Messaging.SingleEmailMessage
+
+fn wrapAll(
+    msg: Messaging.SingleEmailMessage,
+): List<Messaging.SingleEmailMessage> {
+    [msg]
+}
+```
+
+Generates:
+
+```apex
+private static List<Messaging.SingleEmailMessage> wrapAll(Messaging.SingleEmailMessage msg) {
+    return new List<Messaging.SingleEmailMessage>{msg};
+}
+```
+
+## `extern fn` — Apex static method
+
+```vertex
+extern fn Limits.getCpuTime(): Int
+extern fn Messaging.reserveSingleEmailCapacity(count: Int): Void
+```
+
+`extern fn` declares an Apex static method as a callable Vertex function.
+
+```vertex
+extern fn Limits.getCpuTime(): Int
+
+fn logCpu(): Int {
+    Limits.getCpuTime()
+}
+```
+
+Generates:
+
+```apex
+private static Integer logCpu() {
+    return Limits.getCpuTime();
+}
+```
+
+### `= "apexName"` override
+
+When two Apex overloads share the same name but differ by arity, each can be
+declared as a distinct `extern fn` with a `= "..."` override:
+
+```vertex
+extern fn Messaging.sendEmail(
+    mails: List<Messaging.SingleEmailMessage>,
+): Void
+
+extern fn Messaging.sendEmailChecked(
+    mails: List<Messaging.SingleEmailMessage>,
+    allOrNothing: Bool,
+): Void = "Messaging.sendEmail"
+```
+
+<Aside type="caution">
+Extern fns are not callable in JIT (`vertex run`) mode — they require the
+Salesforce runtime. Calling an extern fn in JIT mode produces a runtime error.
+</Aside>
+
+## `extern new` — Apex constructor
+
+```vertex
+extern type Messaging.SingleEmailMessage
+
+extern new Messaging.SingleEmailMessage(): Messaging.SingleEmailMessage
+```
+
+Vertex code calls it using `TypePath.new()`:
+
+```vertex
+let msg = Messaging.SingleEmailMessage.new()
+```
+
+Generates: `Messaging.SingleEmailMessage msg = new Messaging.SingleEmailMessage();`
+
+### Named constructor overloads
+
+```vertex
+extern new Messaging.SingleEmailMessage(): Messaging.SingleEmailMessage
+extern new Messaging.SingleEmailMessage.withSubject(
+    subject: String,
+): Messaging.SingleEmailMessage
+```
+
+Call sites:
+
+```vertex
+let plain    = Messaging.SingleEmailMessage.new()
+let subj_msg = Messaging.SingleEmailMessage.withSubject("Hello")
+```
+
+Generates:
+
+```apex
+new Messaging.SingleEmailMessage()
+new Messaging.SingleEmailMessage('Hello')
+```
+
+## `extern method` — Apex instance method
+
+```vertex
+extern method Messaging.SingleEmailMessage.setSubject(
+    self: Messaging.SingleEmailMessage,
+    subject: String,
+): Void
+```
+
+The first parameter must be named `self` and carry the receiver type. It is excluded from
+the call-site signature.
+
+```vertex
+let msg = Messaging.SingleEmailMessage.new()
+msg.setSubject("Hello")
+```
+
+When the Apex method name differs from the Vertex name, use a `= "..."` override:
+
+```vertex
+extern method Messaging.InboundEmail.getFrom(
+    self: Messaging.InboundEmail,
+): String = "getFromAddress"
+```
+
+## `extern field` — Read-only Apex field
+
+```vertex
+extern field Messaging.InboundEmail.subject: String
+```
+
+Vertex code can read the field via dot access; writes are rejected by the
+checker (error `E120`).
+
+## `extern var` — Read-write Apex field
+
+```vertex
+extern var Messaging.SingleEmailMessage.optOutPolicy: String
+```
+
+Reads are always allowed. Writes require the receiver to be declared
+`mutable let`; writing through an immutable binding is error `E119`.
+
+```vertex
+fn configurePolicy(mutable let msg: Messaging.SingleEmailMessage): Void {
+    msg.optOutPolicy = "SEND_OPT_OUT"   // ok — receiver is mutable
+    Void
+}
+```
+
+Field assignment syntax: `receiver.field = value` emits `receiver.field = value;` verbatim in Apex.
+
+## `extern enum` — Apex enum type
+
+```vertex
+extern enum Schema.DisplayType { Address, Currency, Phone, Picklist, Reference }
+```
+
+Maps an Apex enum type into Vertex as a sum type with unit variants.
+
+```vertex
+let dt: Schema.DisplayType = Address
+```
+
+Match arms use `==` comparison in Apex:
+
+```vertex
+fn label(dt: Schema.DisplayType): String {
+    match dt {
+        Address   => "mailing address",
+        Phone     => "phone number",
+        Reference => "lookup to another object",
+        _         => "other",
+    }
+}
+```
+
+Generates:
+
+```apex
+if (dt == Schema.DisplayType.Address) {
+    return 'mailing address';
+} else if (dt == Schema.DisplayType.Phone) {
+    return 'phone number';
+} else if (dt == Schema.DisplayType.Reference) {
+    return 'lookup to another object';
+} else {
+    return 'other';
+}
+```
+
+Extern enum variants can be constructed and matched in JIT mode without a Salesforce connection.
+
+## FFI safety rules
+
+### `Option<T>` return — null-check wrapper
+
+When an extern declaration returns `Option<T>`, the codegen wraps every call site with a null check:
+
+```vertex
+extern fn Limits.getHeapSize(): Option<Int>
+
+let heap = Limits.getHeapSize()   // heap: Option<Int>
+```
+
+Generated Apex:
+```apex
+Integer vtxFfiRaw0 = Limits.getHeapSize();
+Option vtxFfiResult0 = vtxFfiRaw0 != null ? (Option) new Some(vtxFfiRaw0) : (Option) new None();
+final Option heap = vtxFfiResult0;
+```
+
+The programmer is responsible for knowing whether the Apex API can return
+`null`. If declared non-`Option` and the Apex side returns `null`, a
+`NullPointerException` propagates in Apex.
+
+### `Result<T, ApexException>` return — try/catch wrapper
+
+When an extern declaration returns `Result<T, ApexException>`, the codegen
+wraps every call site with a `try`/`catch`.
+
+```vertex
+extern fn Database.countQuery(soql: String): Result<Int, ApexException>
+
+let result = Database.countQuery("SELECT COUNT() FROM Account")
+match result {
+  Ok(n)  => debug "count: " + n.toString(),
+  Error(e) => debug "error: " + e.message,
+}
+```
+
+The `ApexException` type carries:
+
+| Field | Type | Description |
+|---|---|---|
+| `message` | `String` | Exception message |
+| `typeName` | `String` | Apex exception class name |
+| `stackTrace` | `String` | Stack trace string |
+| `cause` | `Option<ApexException>` | Cause if present |
+
+<Aside type="note">
+The generated Apex class is named `VtxApexError` rather than `ApexException` because Apex requires any class named `*Exception` to extend `Exception`. The Vertex type name remains `ApexException`.
+</Aside>
