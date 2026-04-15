@@ -1,14 +1,39 @@
 ---
 title: Annotations
-description: Salesforce-specific annotations in Vertex — AuraEnabled, SObject, sharing modifiers.
+description: Annotations in Vertex — @Test for testing, AuraEnabled, SObject, sharing modifiers.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
 <Aside>
-Annotations are Salesforce-specific. They are parsed and forwarded as-is to the
-Apex codegen. They have no JIT semantics.
+Most annotations are Salesforce-specific: they are parsed and forwarded to the
+Apex codegen and have no JIT semantics. **`@Test` is the exception** — it is
+fully understood by the Vertex toolchain: the checker enforces its rules, the
+test runner discovers and executes `@Test` functions locally, and the codegen
+emits `@IsTest` on both the function and (for `*_test.vtx` files) the class.
 </Aside>
+
+## `@Test` on functions
+
+Marks a zero-parameter function as a test case. The `vertex test` command
+discovers and runs all `@Test` functions in `*_test.vtx` files.
+
+```vertex
+@Test
+fn add_two_numbers(): Void {
+    assert 1 + 1 == 2
+}
+```
+
+Rules enforced by the checker:
+- The function must have **no parameters** (error E136).
+- `@Test` may only appear in files whose name ends in `_test.vtx` (error E137).
+- Non-test modules may not import test modules (error E138).
+
+`@Test` functions are exempt from the unused-private-function warning (W005)
+because the test runner calls them externally.
+
+See the [Testing reference](/reference/testing/) for the full testing guide.
 
 ## Module-level sharing annotations
 

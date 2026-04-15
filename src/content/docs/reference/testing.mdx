@@ -1,0 +1,166 @@
+---
+title: Testing
+description: Writing and running tests in Vertex with @Test and vertex test.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Writing tests
+
+Mark any zero-parameter function with `@Test` to declare it as a test case:
+
+```vertex
+@Test
+fn add_two_numbers(): Void {
+    assert 1 + 1 == 2
+}
+```
+
+Rules:
+- `@Test` functions must have **no parameters** (E136).
+- `@Test` may only appear in files whose name ends in `_test.vtx` (E137).
+- Non-test modules may not import test modules (E138).
+
+Use `assert` for inline assertions. A failing assertion reports the source
+location and the condition that was false:
+
+```
+---- add_two_numbers ----
+math_utils_test.vtx:5:5: assertion failed: 1 + 1 == 3
+```
+
+Use `let assert` to destructure an expected variant and fail fast if it
+doesn't match:
+
+```vertex
+@Test
+fn divide_succeeds(): Void {
+    let result = safe_divide(10, 2)
+    let assert Ok(value) = result
+    assert value == 5
+}
+```
+
+## Naming convention
+
+Test files must end in `_test.vtx`. The codegen emits a class-level `@IsTest`
+for every `_test.vtx` source file, making the class deployable as a Salesforce
+Apex test class.
+
+## Running tests
+
+### Single file
+
+```sh
+vertex test path/to/module_test.vtx
+```
+
+Runs all `@Test` functions in the file. Exit code 0 if all pass, 1 on any failure.
+
+### Entire project
+
+Run from the directory that contains `sfdx-project.json`:
+
+```sh
+vertex test
+```
+
+Discovers all `*_test.vtx` files under `<projectRoot>/src/` recursively and
+runs them in alphabetical order. Exit code 0 only if every test in every file passes.
+
+### Filter
+
+```sh
+vertex test --filter divide
+```
+
+Runs only the test functions whose names contain the filter string (substring
+match). Exit code 1 if no tests match the filter.
+
+## CLI flags
+
+| Flag               | Description                                          |
+|--------------------|------------------------------------------------------|
+| `--filter <text>`  | Run only tests whose name contains `<text>`          |
+| `--src <path>`     | Override the source root (default: `<root>/src/`)    |
+| `--no-color`       | Disable ANSI color in output                         |
+| `--help`, `-h`     | Show usage                                           |
+
+## Output format
+
+Test output follows the Cargo/Rust test style:
+
+```
+running 7 tests
+test add_returns_sum ... ok
+test subtract_returns_difference ... ok
+test multiply_returns_product ... ok
+test safe_divide_returns_ok_for_nonzero_divisor ... ok
+test safe_divide_returns_error_for_zero_divisor ... ok
+test clamp_keeps_value_in_range ... ok
+test is_even_identifies_even_and_odd ... ok
+
+test result: ok. 7 passed; 0 failed
+```
+
+When a test fails, the failure details appear after the summary:
+
+```
+running 2 tests
+test passes ... ok
+test fails_on_bad_value ... FAILED
+
+failures:
+
+---- fails_on_bad_value ----
+math_utils_test.vtx:14:5: assertion failed: result == 99
+
+test result: FAILED. 1 passed; 1 failed
+```
+
+## Isolation model
+
+Each `@Test` function runs in a **fresh interpreter context**. Module-level
+`const` bindings are re-evaluated for every test; no state leaks between tests.
+This matches the Apex test isolation model where each test method runs in a
+rolled-back transaction.
+
+## Salesforce parity
+
+`@Test` functions compile to `@IsTest private static void` Apex methods.
+The file-level `@IsTest` class annotation is added automatically by the
+codegen for any `*_test.vtx` source file:
+
+```apex
+@IsTest
+public with sharing class Lang_MathUtilsTest {
+    @IsTest
+    private static void add_returns_sum() {
+        System.Assert.isTrue(Lang_MathUtils.add(2, 3) == 5,
+            'assertion failed at 5:5: add(2, 3) == 5');
+    }
+}
+```
+
+The assertion message is embedded in the generated `System.Assert.isTrue` call
+so failures reported by the Salesforce Test Runner point back to the original
+Vertex source location.
+
+## Language compatibility
+
+All Vertex features are supported in test files. The only restriction is that
+test files cannot be imported from non-test modules. The following constructs
+are commonly used in tests:
+
+| Construct           | Notes                                             |
+|---------------------|---------------------------------------------------|
+| `assert <bool>`     | Inline assertion; fails with source location      |
+| `let assert <pat> = <expr>` | Destructuring assertion; fails if pattern doesn't match |
+| `debug <expr>`      | Still works in tests; printed to stdout           |
+| `import`            | Full cross-module imports supported               |
+
+<Aside type="caution">
+`Database.*` DML operations are **simulated** in JIT mode (stub Ids, stderr
+notice). They execute for real on the Salesforce org. Design tests that work
+with stub Ids or avoid DML in unit tests where possible.
+</Aside>

@@ -67,19 +67,26 @@ match result {
 
 All DML operations return `Result<T, DmlError>`:
 
-| Operation                   | Return type              |
-|-----------------------------|--------------------------|
-| `Database.insert(sobj)`     | `Result<Id, DmlError>` — `Ok` holds the new record Id |
-| `Database.update(sobj)`     | `Result<Void, DmlError>` |
-| `Database.delete(sobj)`     | `Result<Void, DmlError>` |
-| `Database.undelete(sobj)`   | `Result<Void, DmlError>` |
+| Operation                        | Return type              |
+|----------------------------------|--------------------------|
+| `Database.insert(sobj)`          | `Result<Id, DmlError>` — `Ok` holds the new record Id |
+| `Database.update(sobj)`          | `Result<Void, DmlError>` |
+| `Database.delete(sobj)`          | `Result<Void, DmlError>` |
+| `Database.undelete(sobj)`        | `Result<Void, DmlError>` |
+| `Database.upsert(sobj)`          | `Result<Id, DmlError>` — `Ok` holds the upserted record Id |
+| `Database.insertAll(sobjs)`      | `List<Result<Id, DmlError>>` |
+| `Database.updateAll(sobjs)`      | `List<Result<Void, DmlError>>` |
+| `Database.deleteAll(sobjs)`      | `List<Result<Void, DmlError>>` |
+| `Database.undeleteAll(sobjs)`    | `List<Result<Void, DmlError>>` |
+| `Database.upsertAll(sobjs)`      | `List<Result<Id, DmlError>>` |
 
-`Database.update`, `Database.delete`, and `Database.undelete` require the SObject
-argument to have a Salesforce Id set (i.e. `Id: Some(record_id)` in the constructor).
-Calling them on a record with no Id fails on the org.
+`Database.update`, `Database.delete`, `Database.undelete`, and `Database.upsert`
+require the SObject argument to have a Salesforce Id set (except `upsert` on new
+records). Calling them on a record with no Id fails on the org.
 
-In JIT mode, DML operations are simulated: `Database.insert` returns a stub `Id` value
-with an incrementing counter, and all operations print a notice to stderr.
+In JIT mode, DML operations are simulated: `Database.insert` and `Database.upsert`
+return stub `Id` values with incrementing counters; all operations print a notice to
+stderr.
 
 ## `Id` — Salesforce record identifier
 
@@ -87,7 +94,7 @@ with an incrementing counter, and all operations print a notice to stderr.
 `String` — there is no implicit coercion in either direction.
 
 `Id` values are produced by:
-- `Database.insert` result (`Ok(id)`)
+- `Database.insert` / `Database.upsert` results (`Ok(id)`)
 - `Id.from(string)` — user-supplied construction
 - SOQL query results
 
