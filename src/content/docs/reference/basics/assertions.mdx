@@ -1,0 +1,82 @@
+---
+title: Assertions
+description: Runtime invariant checks with assert.
+sidebar:
+  order: 5
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`assert` is a **statement** that checks a Boolean condition at runtime. If the
+condition is `true`, execution continues silently. If it is `false`, the program
+panics immediately with a descriptive failure message.
+
+```vertex
+let x = 42
+assert x > 0          // passes — silent
+assert x == 42        // passes — silent
+```
+
+## Syntax
+
+```
+assert <expr>
+```
+
+The expression must be of type `Bool`. The checker rejects any other type at
+compile time (error `E100`).
+
+```vertex
+assert true           // ok
+assert 1 == 1         // ok
+assert "hello"        // E100: type mismatch — expected Bool, found String
+```
+
+## Failure messages
+
+When an assertion fails, Vertex prints a rich message that includes:
+
+- The source location (file, line, column).
+- The rendered source of the condition.
+- For comparison operators (`==`, `!=`, `<`, `>`, `<=`, `>=`): the actual
+  values of the left-hand and right-hand sides.
+
+**Comparison failure example:**
+
+```
+assertion failed at examples/jit/lang/assertions.vtx:7:1
+  source:   x == 42
+  left:     5
+  right:    42
+```
+
+**Non-comparison failure example:**
+
+```
+assertion failed at examples/jit/lang/assertions.vtx:11:1
+  source:   list.contains(target)
+```
+
+## `assert` vs `let assert`
+
+These are two distinct constructs that share the `assert` keyword:
+
+| | `assert` | `let assert` |
+|---|---|---|
+| Purpose | Check a Bool invariant | Destructure a value that must match a pattern |
+| Form | `assert expr` | `let assert Pat = expr` |
+| Failure message | `assertion failed: …` | `let assert pattern did not match: …` |
+
+Both cause a panic on failure and are appropriate during development and in tests.
+
+## Apex codegen
+
+`assert expr` compiles to `System.Assert.isTrue(expr, 'assertion failed at …')`.
+The message is a compile-time string — no runtime decomposition occurs on the
+Apex side. Assertions are **never stripped** from emitted Apex; there is no
+release-build mode that removes them.
+
+<Aside type="note">
+Custom failure messages (`assert cond, "reason"`) are not yet supported.
+A future card will introduce this syntax.
+</Aside>
