@@ -76,6 +76,24 @@ Each module maps to an Apex class when compiled:
 | `E125` | Cyclic import detected                               |
 | `E126` | Name conflict from two selective imports             |
 
+## Running scripts with imports
+
+`vertex run` supports imports without a build step. Point it at any entry script
+and it discovers the project automatically by walking upward from the file's
+directory to find `sfdx-project.json`:
+
+```
+vertex run scripts/hello.vtx
+```
+
+Only the transitively reachable modules are loaded. Files in `src/` that are
+not imported are never touched.
+
+A file with no imports runs anywhere — no project required.
+
+See the [Imports reference](/reference/imports/#vertex-run-and-imports) for the
+full discovery rules and `--sf` preconditions.
+
 ## Next steps
 
 - [Imports reference](/reference/imports/) — full spec including opaque type error codes

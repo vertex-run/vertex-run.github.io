@@ -4,8 +4,8 @@ description: Vertex's file-based module system and import forms.
 ---
 
 Vertex has a file-based module system: each `.vtx` file is a module. Imports
-are fully resolved by `vertex build`; `vertex run` does not support imports
-(use `vertex build` for multi-file projects).
+are resolved by both `vertex build` (for compiling to Apex classes) and
+`vertex run` (for local JIT execution and `--sf` anonymous Apex runs).
 
 ## Import forms
 
@@ -55,6 +55,57 @@ public with sharing class Billing_Invoices { ... }
 
 Cross-module function calls emit as `TargetClass.fnName(args)`.
 Selectively imported types emit as `TargetClass.TypeName` in Apex.
+
+## `vertex run` and imports
+
+`vertex run` supports imports directly — no build step required for local scripts.
+
+**No imports → no project needed.** A file with no `import` declarations runs
+anywhere, just like `dart run` on a standalone Dart file.
+
+**With imports → project discovery.** When the entry file contains imports,
+`vertex run` walks upward from the entry file's directory looking for
+`sfdx-project.json`. The directory that contains that file becomes the project
+root, and `<projectRoot>/src/` is the module tree. Only the transitively
+reachable modules are loaded; unrelated files in `src/` are never touched.
+
+```
+my-project/
+  sfdx-project.json
+  src/
+    greeter.vtx       ← loaded (imported by the script)
+    unrelated.vtx     ← skipped
+  scripts/
+    hello.vtx         ← entry file
+```
+
+```vertex
+// scripts/hello.vtx
+import greeter.{ greet }
+
+debug greet("World")
+```
+
+```
+dart run bin/vertex.dart run scripts/hello.vtx
+```
+
+**`--sf` with imports.** When using `--sf` with an entry script that has imports,
+the workspace must already be built and deployed before running:
+
+```
+vertex build
+sf project deploy start --target-org <alias>
+vertex run --sf --org <alias> scripts/hello.vtx
+```
+
+The generated anonymous Apex references the deployed Apex classes directly
+(e.g. `Greeter.greet("World")`). If a referenced class is not deployed, the
+org returns a runtime "unknown class" error.
+
+**The entry file is a script, not a module.** It may contain top-level
+statements and a trailing expression. It is excluded from the module graph even
+if it lives under `src/` — other modules cannot import the entry file.
 
 ## Visibility
 
