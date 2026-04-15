@@ -24,8 +24,8 @@ debug names.isEmpty()   // false
 ```vertex
 let numbers: List<Int> = [1, 2, 3, 4, 5]
 
-let doubled = numbers.map(fn(n) { n * 2 })          // [2, 4, 6, 8, 10]
-let evens   = numbers.filter(fn(n) { n % 2 == 0 })  // [2, 4]
+let doubled = numbers.map(fn(n) { n * 2 })          // (2, 4, 6, 8, 10)
+let evens   = numbers.filter(fn(n) { n % 2 == 0 })  // (2, 4)
 let sum     = numbers.fold(0, fn(acc, n) { acc + n }) // 15
 ```
 
@@ -35,10 +35,10 @@ There is no subscript syntax (`list[i]`). Index access returns `Option<T>`:
 
 ```vertex
 let xs = [10, 20, 30]
-debug xs.get(1)    // Some(20)
+debug xs.get(1)    // Some(value: 20)
 debug xs.get(99)   // None
-debug xs.first()   // Some(10)
-debug xs.last()    // Some(30)
+debug xs.first()   // Some(value: 10)
+debug xs.last()    // Some(value: 30)
 ```
 
 ### Spread to combine
@@ -46,7 +46,7 @@ debug xs.last()    // Some(30)
 ```vertex
 let a = [1, 2, 3]
 let b = [4, 5, 6]
-let combined = [...a, ...b, 7]   // [1, 2, 3, 4, 5, 6, 7]
+let combined = [...a, ...b, 7]   // (1, 2, 3, 4, 5, 6, 7)
 ```
 
 ### Iterating with `for..in`
@@ -66,10 +66,10 @@ for #(i, name) in names.enumerate() {
 
 ```vertex
 let squares = List.generate(5, fn(i: Int): Int { i * i })
-// [0, 1, 4, 9, 16]
+// (0, 1, 4, 9, 16)
 
 let zeros = List.filled(4, 0)
-// [0, 0, 0, 0]
+// (0, 0, 0, 0)
 ```
 
 ## Map
@@ -80,7 +80,7 @@ Maps are key-value stores. There is no subscript syntax — use `get(key)`:
 let scores: Map<String, Int> = {"Alice": 95, "Bob": 87}
 let empty: Map<String, Int> = Map.empty()
 
-debug scores.get("Alice")   // Some(95)
+debug scores.get("Alice")   // Some(value: 95)
 debug scores.get("Carol")   // None
 
 let updated = scores.put("Carol", 92)    // returns a new map — original unchanged

@@ -10,7 +10,7 @@ sidebar:
 In Vertex, every `.vtx` file is a module. No explicit module declaration is needed. The module name is derived from the filename:
 
 - `accounts.vtx` → module `accounts`
-- `billing/invoices.vtx` → module `billing/invoices`
+- `billing/invoices.vtx` → module `billing.invoices`
 
 ## Visibility
 
@@ -37,7 +37,7 @@ For nested modules, the qualifier is the last path segment:
 ```vertex
 import billing.invoices
 
-let inv = billing_invoices.create()
+let inv = invoices.create()
 ```
 
 **Aliased import** — choose your own qualifier:

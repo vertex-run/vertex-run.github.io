@@ -42,7 +42,7 @@ There is no subscript syntax (`list[i]`). Use `get(i)` for index access.
 | `size()` | `List<T>` | `Int` | Number of elements |
 | `isEmpty()` | `List<T>` | `Bool` | `true` when size is 0 |
 | `get(i: Int)` | `List<T>` | `Option<T>` | `None` on out-of-bounds; no panic |
-| `add(item: T)` | `List<T>` | `List<T>` | Mutates in place, returns `self` (chainable) |
+| `add(item: T)` | `List<T>` | `List<T>` | Pure — returns a new list with `item` appended |
 | `first()` | `List<T>` | `Option<T>` | `None` on empty list |
 | `last()` | `List<T>` | `Option<T>` | `None` on empty list |
 | `contains(item: T)` | `List<T>` | `Bool` | Value equality for primitives; reference equality for class instances |
@@ -180,8 +180,8 @@ Sets are immutable; all mutating methods return a new `Set<T>`.
 | `add(item: T)` | `Set<T>` | `Set<T>` | New set with `item` included |
 | `remove(item: T)` | `Set<T>` | `Set<T>` | New set with `item` excluded |
 | `toList()` | `Set<T>` | `List<T>` | Converts to a list (order unspecified) |
-| `map(fn: T -> U)` | `Set<T>` | `Set<U>` | Transforms each element with `fn` |
-| `filter(fn: T -> Bool)` | `Set<T>` | `Set<T>` | Keeps elements for which `fn` returns `true` |
+| `map(f: fn(T): U)` | `Set<T>` | `Set<U>` | Transforms each element with `f` |
+| `filter(f: fn(T): Bool)` | `Set<T>` | `Set<T>` | Keeps elements for which `f` returns `true` |
 | `union(other: Set<T>)` | `Set<T>` | `Set<T>` | All elements from both sets |
 | `intersection(other: Set<T>)` | `Set<T>` | `Set<T>` | Elements present in both sets |
 | `difference(other: Set<T>)` | `Set<T>` | `Set<T>` | Elements in receiver but not in `other` |
