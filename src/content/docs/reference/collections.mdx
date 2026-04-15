@@ -31,6 +31,11 @@ Spread syntax combines lists:
 let combined = [...list1, ...list2, "extra"]
 ```
 
+`...expr` (three dots) is the spread form and only appears in list *expressions*.
+The two-dot `..` is a pattern-only form for silently discarding the rest of a list
+or the unmentioned fields of a variant — see [Pattern Matching](/reference/pattern-matching/).
+`..` is never valid inside a list literal.
+
 Lists can be iterated with `for..in` and pattern-matched with list patterns.
 
 There is no subscript syntax (`list[i]`). Use `get(i)` for index access.

@@ -48,6 +48,20 @@ let Book(title:, author: a, genre:) = b   // title and genre use shorthand
 The shorthand is valid in all pattern positions: `let`, `let assert`, `match`
 arms, and `for` loop heads.
 
+### Discarding unmentioned fields in variant patterns
+
+A trailing `..` inside a variant or record pattern means "I don't care about
+the remaining fields". Without it, you must bind every field the type declares.
+
+```vertex
+match b {
+    Book(title:, ..) => debug title,   // ignore author, genre, isbn, ...
+}
+```
+
+`..` is only valid at the end of the field list and binds nothing. If you want
+to *capture* something, use `...`; if you want to *discard*, use `..`.
+
 ### Match guards
 
 ```vertex
@@ -134,7 +148,10 @@ match items {
 }
 ```
 
-`...rest` captures the tail as a `List`. `..` discards it.
+**Rule of thumb:** `...` binds or spreads; `..` discards. Three dots does something
+with the rest; two dots throws it away. The same rule applies to list patterns
+(`[head, ...rest]` vs `[a, b, ..]`) and to variant patterns (`Book(title:, ..)`) —
+`...` has no form in variant patterns since variant fields are named, not positional.
 
 ### `let assert` — runtime-checked single-pattern extraction
 
