@@ -1,0 +1,180 @@
+---
+title: Apex.Object — Interop Escape Hatch
+description: Bridging Vertex's nominal type system to Apex APIs that require the universal `Object` type.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`Apex.Object` is a **nominal, opaque interop type** that lets Vertex code call
+Apex APIs whose signatures name Apex's universal base type `Object` — for
+example `Database.queryWithBindings(query, Map<String, Object>, accessLevel)`
+and `JSON.deserializeUntyped(json)`.
+
+<Aside type="caution" title="Interop only">
+`Apex.Object` exists **only** as an escape hatch for Apex FFI. It should not
+appear in idiomatic Vertex code. The type is deliberately *inert*: it has no
+methods, no fields, no pattern-matching support, and no operators. The only
+meaningful things you can do with an `Apex.Object` value are pass it back to
+an `extern` function or narrow it with `Apex.Object.as<T>` — by design.
+</Aside>
+
+## The two operations
+
+`Apex.Object` has exactly two operations, both compiler intrinsics:
+
+| Operation | Signature | Purpose |
+|---|---|---|
+| `Apex.Object.from<T>(x: T)` | `(T) -> Apex.Object` | Wrap any typed Vertex value into `Apex.Object`. |
+| `Apex.Object.as<T>(x: Apex.Object)` | `(Apex.Object) -> Result<T, Apex.CastError>` | Runtime-check and narrow to `T`. |
+
+### `Apex.Object.from<T>(value)` — wrap
+
+Takes any Vertex value and wraps it into the opaque interop type. At runtime
+this is a no-op — the value is already `Object` on the Apex side.
+
+```vertex
+let raw: Apex.Object = Apex.Object.from(42)
+let also: Apex.Object = Apex.Object.from("Acme")
+```
+
+Calling `from` on a value that is already `Apex.Object` is a compile-time
+error — the wrapper call would be a no-op.
+
+### `Apex.Object.as<T>(value)` — narrow
+
+Runtime-checks the wrapped value and returns `Result<T, Apex.CastError>`:
+`Ok(narrowedValue)` on match, `Err(CastError(...))` on mismatch. This is the
+*only* way to pull a typed value back out.
+
+```vertex
+let raw: Apex.Object = Apex.Object.from(42)
+match Apex.Object.as<Int>(raw) {
+    Ok(n)    => debug n,           // prints 42
+    Error(e) => debug e.expectedType,
+}
+```
+
+#### Allowed narrow-target types
+
+| Category | Examples |
+|---|---|
+| Primitives | `Int`, `Long`, `Double`, `Decimal`, `Bool`, `String`, `Id`, `Date`, `Datetime` |
+| SObjects | `Account`, `Contact`, custom `@SObject` types |
+| Extern types | anything declared via `extern type` |
+| Container shapes | `List<Apex.Object>`, `Set<Apex.Object>`, `Map<K, Apex.Object>` where `K` is a primitive |
+
+Unsupported targets (e.g. `List<String>`, `Option<Int>`, tuples, user sum
+types, function types) are rejected with a `help:` message telling you to
+narrow to `List<Apex.Object>` and walk the elements.
+
+## `Apex.CastError`
+
+The error value returned by `Apex.Object.as<T>`:
+
+```vertex
+type Apex.CastError {
+    CastError(expectedType: String, actualType: String)
+}
+```
+
+You never construct `Apex.CastError` yourself — it is produced only by the
+generated narrowing code. You can read its fields after pattern-matching on
+the `Err` arm.
+
+## Inertness rules
+
+These operations are **compile-time errors** on a value of type `Apex.Object`:
+
+| Operation | Error | Reason |
+|---|---|---|
+| `==`, `!=` | E148 | No user-visible equality. |
+| `<`, `<=`, `>`, `>=` | E149 | No user-visible ordering. |
+| `+`, `-`, `*`, `/`, `%` | E150 | No arithmetic or string concat. |
+| `match x { ... }` | E151 | No variants, no structure. |
+| `x.field` | E152 | No user-visible fields. |
+| `"${x}"` (interpolation) | E153 | No user-visible string form. |
+| `Map<Apex.Object, V>` | E154 | Not a valid hashable key type. |
+
+Each error message points you at `Apex.Object.as<T>` as the way forward.
+
+Binding, passing, and collection-insertion are allowed:
+
+```vertex
+// All fine: Apex.Object flowing through the FFI seam.
+let x: Apex.Object = Apex.Object.from(42)
+let xs: List<Apex.Object> = [x, Apex.Object.from("hi")]
+let m: Map<String, Apex.Object> = { "n": x, "s": Apex.Object.from("hi") }
+```
+
+## Motivating example — `Database.queryWithBindings`
+
+The primary use case is calling Apex APIs whose signatures require a
+`Map<String, Object>`. Declare the extern with `Apex.Object` in the map value
+position, then build the map at the call site:
+
+```vertex
+pub extern fn Database.queryWithBindings(
+    query: String,
+    bindings: Map<String, Apex.Object>,
+    accessLevel: System.AccessLevel,
+): Result<List<SObject>, ApexException>
+
+fn recentNamed(name: String, since: Datetime): List<Account> {
+    let bindings: Map<String, Apex.Object> = {
+        "name":  Apex.Object.from(name),
+        "since": Apex.Object.from(since),
+    }
+    Database.queryWithBindings(
+        "SELECT Id, Name FROM Account WHERE Name = :name AND CreatedDate > :since",
+        bindings,
+        System.AccessLevel.SYSTEM_MODE,
+    ).unwrapOr([])
+}
+```
+
+`Apex.Object.from` erases to a no-op in generated Apex — the value is already
+`Object` in the Apex world:
+
+```apex
+Map<String, Object> bindings = new Map<String, Object>{
+    'name'  => name,
+    'since' => since
+};
+```
+
+## Walking a JSON-like tree
+
+`JSON.deserializeUntyped` returns `Apex.Object` whose runtime shape is
+typically `Map<String, Object>` with nested maps, lists, and primitives. The
+walk uses `Apex.Object.as<T>` at each step:
+
+```vertex
+pub extern fn JSON.deserializeUntyped(json: String): Result<Apex.Object, ApexException>
+
+fn userName(json: String): Option<String> {
+    JSON.deserializeUntyped(json).toOption().flatMap(
+        fn(root: Apex.Object): Option<String> {
+            Apex.Object.as<Map<String, Apex.Object>>(root).toOption().flatMap(
+                fn(m: Map<String, Apex.Object>): Option<String> {
+                    m.get("user").flatMap(
+                        fn(u: Apex.Object): Option<String> {
+                            Apex.Object.as<Map<String, Apex.Object>>(u).toOption().flatMap(
+                                fn(userMap: Map<String, Apex.Object>): Option<String> {
+                                    userMap.get("name").flatMap(
+                                        fn(n: Apex.Object): Option<String> {
+                                            Apex.Object.as<String>(n).toOption()
+                                        }
+                                    )
+                                }
+                            )
+                        }
+                    )
+                }
+            )
+        }
+    )
+}
+```
+
+The verbosity is **intentional**. Every step returns a `Result` or `Option`,
+keeping the parse-don't-cast discipline explicit at every level.

@@ -268,3 +268,11 @@ The `ApexException` type carries:
 <Aside type="note">
 The generated Apex class is named `VtxApexError` rather than `ApexException` because Apex requires any class named `*Exception` to extend `Exception`. The Vertex type name remains `ApexException`.
 </Aside>
+
+## Calling Apex APIs that use `Object`
+
+Some Apex APIs — `Database.queryWithBindings`, `JSON.deserializeUntyped`,
+parts of `Schema.describe*` — take or return Apex's universal `Object`
+type. See [`Apex.Object`](/reference/apex-object/) for the interop escape
+hatch that makes those APIs reachable without breaking Vertex's nominal
+type system.
