@@ -57,22 +57,6 @@ import { Card, CardGrid, Aside } from '@astrojs/starlight/components';
 - Not trying to replicate all of Apex. Existing Apex code stays as Apex; Vertex is for new code.
 - Not a scripting language. It is statically typed and compiled (to Apex) or JIT-executed locally.
 
-## Locked Design Decisions
-
-### Type System
-
-- **Nominal typing.** Two types are only compatible if they are explicitly declared to be so. No structural duck-typing.
-- **Strict null safety.** There is no `null`. Absence of a value is expressed as `Option<T>`.
-- **Generics** are supported.
-- **Type inference** is supported — annotations are optional on local bindings but encouraged on function signatures.
-
-### Object Model
-
-- **Classes are allowed, inheritance is not.** A class cannot extend another class.
-- **Interfaces are allowed.** A class can implement multiple interfaces.
-- **No static methods.** Class-level behavior lives as module-level functions.
-- Composition over inheritance. Shared behavior is achieved through interfaces and by passing functions/values.
-
 ### Mutability
 
 All bindings are immutable by default (`let`). Mutable bindings require the explicit `mutable` keyword:
