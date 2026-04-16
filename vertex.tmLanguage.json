@@ -1,0 +1,208 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Vertex",
+  "aliases": ["vertex", "vtx"],
+  "scopeName": "source.vertex",
+  "fileTypes": ["vtx"],
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#string" },
+    { "include": "#number" },
+    { "include": "#boolean" },
+    { "include": "#annotation" },
+    { "include": "#keyword" },
+    { "include": "#keyword-control" },
+    { "include": "#keyword-import" },
+    { "include": "#keyword-debug" },
+    { "include": "#operator" },
+    { "include": "#function-declaration" },
+    { "include": "#function-call" },
+    { "include": "#builtin-type" },
+    { "include": "#type-identifier" },
+    { "include": "#special-identifier" }
+  ],
+  "repository": {
+    "comment": {
+      "name": "comment.line.double-slash.vertex",
+      "match": "//.*$"
+    },
+
+    "string": {
+      "name": "string.quoted.double.vertex",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.vertex",
+          "match": "\\\\[\"\\\\nrt$]"
+        },
+        {
+          "name": "meta.interpolation.vertex",
+          "begin": "\\$\\{",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.template-expression.begin.vertex" }
+          },
+          "end": "\\}",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.template-expression.end.vertex" }
+          },
+          "patterns": [
+            { "include": "#comment" },
+            { "include": "#string" },
+            { "include": "#number" },
+            { "include": "#boolean" },
+            { "include": "#keyword" },
+            { "include": "#keyword-control" },
+            { "include": "#builtin-type" },
+            { "include": "#type-identifier" },
+            { "include": "#special-identifier" }
+          ]
+        },
+        {
+          "name": "punctuation.definition.string.dollar.vertex",
+          "match": "\\$"
+        }
+      ]
+    },
+
+    "number": {
+      "patterns": [
+        {
+          "name": "constant.numeric.decimal.vertex",
+          "match": "\\b[0-9]+\\.[0-9]+d\\b"
+        },
+        {
+          "name": "constant.numeric.long.vertex",
+          "match": "\\b[0-9]+L\\b"
+        },
+        {
+          "name": "constant.numeric.float.vertex",
+          "match": "\\b[0-9]+\\.[0-9]+([eE][+-]?[0-9]+)?\\b"
+        },
+        {
+          "name": "constant.numeric.integer.vertex",
+          "match": "\\b[0-9]+\\b"
+        }
+      ]
+    },
+
+    "boolean": {
+      "name": "constant.language.boolean.vertex",
+      "match": "\\b(true|false)\\b"
+    },
+
+    "annotation": {
+      "name": "meta.annotation.vertex",
+      "match": "(@)([A-Z][a-zA-Z0-9_]*)",
+      "captures": {
+        "1": { "name": "punctuation.definition.annotation.vertex" },
+        "2": { "name": "entity.other.attribute-name.vertex" }
+      }
+    },
+
+    "keyword": {
+      "name": "keyword.other.vertex",
+      "match": "\\b(fn|pub|let|mutable|class|implements|type|assert)\\b"
+    },
+
+    "keyword-control": {
+      "name": "keyword.control.vertex",
+      "match": "\\b(if|else|match|for|in|return)\\b"
+    },
+
+    "keyword-import": {
+      "name": "keyword.control.import.vertex",
+      "match": "\\b(import|as)\\b"
+    },
+
+    "keyword-debug": {
+      "name": "keyword.other.debug.vertex",
+      "match": "\\bdebug\\b"
+    },
+
+    "operator": {
+      "patterns": [
+        {
+          "name": "keyword.operator.pipe.vertex",
+          "match": "\\|>"
+        },
+        {
+          "name": "keyword.operator.arrow.vertex",
+          "match": "=>"
+        },
+        {
+          "name": "keyword.operator.comparison.vertex",
+          "match": "(==|!=|<=|>=)"
+        },
+        {
+          "name": "keyword.operator.logical.vertex",
+          "match": "(&&|\\|\\|)"
+        },
+        {
+          "name": "keyword.operator.spread.vertex",
+          "match": "\\.\\."
+        },
+        {
+          "name": "keyword.operator.propagation.vertex",
+          "match": "\\?"
+        },
+        {
+          "name": "keyword.operator.arithmetic.vertex",
+          "match": "[+\\-*/%]"
+        },
+        {
+          "name": "keyword.operator.comparison.vertex",
+          "match": "[<>]"
+        },
+        {
+          "name": "keyword.operator.not.vertex",
+          "match": "!"
+        },
+        {
+          "name": "keyword.operator.assignment.vertex",
+          "match": "(?<!=)=(?!=|>)"
+        }
+      ]
+    },
+
+    "function-declaration": {
+      "name": "meta.function.vertex",
+      "match": "\\b(fn)\\s+([a-z_][a-zA-Z0-9_]*)\\b",
+      "captures": {
+        "1": { "name": "keyword.other.vertex" },
+        "2": { "name": "entity.name.function.vertex" }
+      }
+    },
+
+    "function-call": {
+      "name": "meta.function-call.vertex",
+      "match": "\\b([a-z_][a-zA-Z0-9_]*)(?=\\s*\\()",
+      "captures": {
+        "1": { "name": "entity.name.function.call.vertex" }
+      }
+    },
+
+    "builtin-type": {
+      "name": "support.type.vertex",
+      "match": "\\b(Int|Long|Double|Decimal|Bool|String|Void|Option|Result|List|Map|Set|DmlError|Database|Some|None|Ok|Error)\\b"
+    },
+
+    "type-identifier": {
+      "name": "entity.name.class.vertex",
+      "match": "\\b[A-Z][a-zA-Z0-9_]*\\b"
+    },
+
+    "special-identifier": {
+      "patterns": [
+        {
+          "name": "variable.language.self.vertex",
+          "match": "\\bself\\b"
+        },
+        {
+          "name": "variable.language.wildcard.vertex",
+          "match": "\\b_\\b"
+        }
+      ]
+    }
+  }
+}

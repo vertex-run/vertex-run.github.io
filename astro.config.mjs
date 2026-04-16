@@ -2,6 +2,7 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import starlightCatppuccin from "@catppuccin/starlight";
+import vertexGrammar from "./vertex.tmLanguage.json" with { type: "json" };
 
 export default defineConfig({
   integrations: [
@@ -98,6 +99,11 @@ export default defineConfig({
         },
       ],
       customCss: ["./src/styles/custom.css"],
+      expressiveCode: {
+        shiki: {
+          langs: [vertexGrammar],
+        },
+      },
       plugins: [starlightCatppuccin()],
     }),
   ],
