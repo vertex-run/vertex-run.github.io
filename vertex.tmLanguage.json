@@ -102,7 +102,7 @@
 
     "keyword": {
       "name": "keyword.other.vertex",
-      "match": "\\b(fn|pub|let|mutable|class|implements|type|assert)\\b"
+      "match": "\\b(fn|pub|let|mutable|class|implements|type|assert|const)\\b"
     },
 
     "keyword-control": {

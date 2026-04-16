@@ -5,8 +5,9 @@ sidebar:
   order: 5
 ---
 
-Module-level constants are declared with `const`. Their values must be scalar
-literals (no function calls or references to other constants).
+Module-level constants are declared with `const`. Their values are evaluated at
+compile time — scalars, arithmetic, collection literals, and references to other
+constants in the same module are all allowed.
 
 ```vertex
 const max_retries = 3
@@ -14,13 +15,70 @@ const api_version: String = "v2"
 pub const discount_rate = 10    // visible to importers
 ```
 
-- Constants are **always immutable** — no `mutable` qualifier is allowed.
-- The type is inferred from the literal unless an explicit annotation is given.
-- Public constants (`pub const`) are exported in the module signature and can
-  be imported with `import module.{ constant_name }`.
-- In class-file Apex codegen, constants emit as `[public|private] final static Type name = value;`.
-- In anonymous Apex, constants emit as `final Type name = value;` at the top
-  of the block, before any body statements.
+## Scalar literals
 
-**Allowed literal types:** `Int`, `Long`, `Double`, `Decimal`, `Bool`, `String`.
+Any of `Int`, `Long`, `Double`, `Decimal`, `Bool`, or `String` may appear on
+the right-hand side directly.
+
+```vertex
+const enabled = true
+const pi: Double = 3.14
+const greeting = "Hello"
+```
+
 String interpolation is not permitted in constant strings.
+
+## Arithmetic and unary minus
+
+Binary `+`, `-`, `*`, `/`, `%` are allowed on numeric constants. `+` on two
+`String` operands performs concatenation.
+
+```vertex
+const base = 10
+const doubled = base * 2
+const full = "Hello" + ", world!"
+const neg = -base
+```
+
+## References to other constants
+
+A constant may reference any other `const` in the same module, including
+forward references (order of declaration does not matter). Cycles are an error.
+
+```vertex
+const doubled = base * 2   // forward reference — fine
+const base = 10
+```
+
+## Collection literals
+
+Lists, maps, and sets may be used as const values.
+
+```vertex
+const statuses = ["Draft", "Active", "Closed"]
+const codes = {200: "OK", 404: "Not Found"}
+const flags = #{true, false}
+```
+
+Empty collections require an explicit type annotation so the element type is known.
+
+```vertex
+const empty: List<String> = []
+```
+
+## Visibility
+
+- **Private** (`const`): accessible within the same module only.
+- **Public** (`pub const`): exported in the module's signature.
+
+Cross-module selective import of a `pub const` is not yet supported. Use a bare
+import and qualify the name (`module.constant`) instead.
+
+## Codegen
+
+- **Class-file Apex**: emits as `[public|private] final static Type name = value;`.
+- **Anonymous Apex**: emits as `final Type name = value;` at the top of the block,
+  before any body statements.
+
+The emitted value is always the fully-evaluated compile-time literal — never a
+reference or expression.
