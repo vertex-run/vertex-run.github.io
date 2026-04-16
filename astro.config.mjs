@@ -59,6 +59,12 @@ export default defineConfig({
               ],
             },
             {
+              label: 'Tooling',
+              items: [
+                { label: 'Testing', link: 'reference/testing' },
+              ],
+            },
+            {
               label: 'Salesforce',
               items: [
                 { label: 'Salesforce Integration', link: 'reference/salesforce-integration' },
