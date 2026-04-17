@@ -31,7 +31,7 @@ jobs:
           template: splash
           hero:
             title: Vertex
-            tagline: A modern programming language for Salesforce development. Coming soon — stay tuned.
+            tagline: Coming soon.
           ---
           EOF
 
