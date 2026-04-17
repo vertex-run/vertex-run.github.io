@@ -19,6 +19,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Apply coming-soon mode
+        if: vars.COMING_SOON == 'true'
+        run: |
+          # Replace index with a minimal splash page.
+          cat > src/content/docs/index.mdx << 'EOF'
+          ---
+          title: Vertex
+          description: A modern programming language for Salesforce development. Coming soon.
+          template: splash
+          hero:
+            title: Vertex
+            tagline: A modern programming language for Salesforce development. Coming soon — stay tuned.
+          ---
+          EOF
+
+          # Remove all other content so no other pages are generated.
+          find src/content/docs -name "*.mdx" ! -name "index.mdx" -delete
+          find src/content/docs -mindepth 1 -type d | xargs rm -rf
+
+          # Clear the sidebar so Starlight doesn't try to link to deleted pages.
+          python3 -c "
+          import re, sys
+          with open('astro.config.mjs') as f:
+              content = f.read()
+          content = re.sub(r'sidebar:\s*\[.*?\],', 'sidebar: [],', content, flags=re.DOTALL)
+          with open('astro.config.mjs', 'w') as f:
+              f.write(content)
+          print('Sidebar cleared.')
+          "
+
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
