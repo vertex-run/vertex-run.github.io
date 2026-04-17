@@ -5,6 +5,7 @@ import starlightCatppuccin from "@catppuccin/starlight";
 import vertexGrammar from "./vertex.tmLanguage.json" with { type: "json" };
 
 export default defineConfig({
+  site: "https://vertex-run.github.io",
   integrations: [
     starlight({
       title: "Vertex",
