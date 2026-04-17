@@ -39,16 +39,8 @@ jobs:
           find src/content/docs -name "*.mdx" ! -name "index.mdx" -delete
           find src/content/docs -mindepth 1 -type d | xargs rm -rf
 
-          # Clear the sidebar so Starlight doesn't try to link to deleted pages.
-          python3 -c "
-          import re, sys
-          with open('astro.config.mjs') as f:
-              content = f.read()
-          content = re.sub(r'sidebar:\s*\[.*?\],', 'sidebar: [],', content, flags=re.DOTALL)
-          with open('astro.config.mjs', 'w') as f:
-              f.write(content)
-          print('Sidebar cleared.')
-          "
+          # Swap in the minimal coming-soon Astro config.
+          cp astro.config.coming-soon.mjs astro.config.mjs
 
       - uses: actions/setup-node@v4
         with:
