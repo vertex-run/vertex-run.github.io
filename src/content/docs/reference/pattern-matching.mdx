@@ -3,7 +3,7 @@ title: Pattern Matching
 description: Exhaustive match expressions, let assert, and pattern syntax in Vertex.
 ---
 
-### `match` — exhaustive, checked by the compiler
+### `match`: exhaustive, checked by the compiler
 
 ```vertex
 fn area(
@@ -35,7 +35,7 @@ When the binding variable has the same name as the field, a trailing colon
 // Long form
 let Book(title: title, author: author, genre: genre) = b
 
-// Shorthand — equivalent
+// Shorthand. Equivalent
 let Book(title:, author:, genre:) = b
 ```
 
@@ -150,10 +150,10 @@ match items {
 
 **Rule of thumb:** `...` binds or spreads; `..` discards. Three dots does something
 with the rest; two dots throws it away. The same rule applies to list patterns
-(`[head, ...rest]` vs `[a, b, ..]`) and to variant patterns (`Book(title:, ..)`) —
+(`[head, ...rest]` vs `[a, b, ..]`) and to variant patterns (`Book(title:, ..)`) ,
 `...` has no form in variant patterns since variant fields are named, not positional.
 
-### `let assert` — runtime-checked single-pattern extraction
+### `let assert`: runtime-checked single-pattern extraction
 
 import { Aside } from '@astrojs/starlight/components';
 

@@ -1,0 +1,91 @@
+---
+title: Install Vertex
+description: Download the vertex binary and put it on your PATH.
+sidebar:
+  order: 2
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+Vertex ships as a single binary per platform. Grab the one for your
+machine from the
+[latest release](https://github.com/vertex-run/vertex/releases/latest)
+and put it on your `PATH`.
+
+<Aside type="caution" title="Vertex is very early">
+Before you install: Vertex is in active early development. The
+language, stdlib, and tooling are still moving and **you should expect
+breaking changes between releases**. Pin to a specific release tag if
+you care, and please
+[file issues](https://github.com/vertex-run/vertex/issues/new/choose)
+when something breaks, confuses you, or just feels wrong. Early
+feedback is how this gets less rough.
+</Aside>
+
+## Download and install
+
+<Tabs>
+  <TabItem label="macOS (Apple Silicon)">
+```bash
+curl -Lo vertex https://github.com/vertex-run/vertex/releases/latest/download/vertex-macos-arm64
+chmod +x vertex
+sudo mv vertex /usr/local/bin/
+```
+  </TabItem>
+  <TabItem label="macOS (Intel)">
+```bash
+curl -Lo vertex https://github.com/vertex-run/vertex/releases/latest/download/vertex-macos-x86_64
+chmod +x vertex
+sudo mv vertex /usr/local/bin/
+```
+  </TabItem>
+  <TabItem label="Linux (x86_64)">
+```bash
+curl -Lo vertex https://github.com/vertex-run/vertex/releases/latest/download/vertex-linux-x86_64
+chmod +x vertex
+sudo mv vertex /usr/local/bin/
+```
+  </TabItem>
+  <TabItem label="Windows (x86_64)">
+Download `vertex-windows-x86_64.exe` from the
+[releases page](https://github.com/vertex-run/vertex/releases/latest),
+rename it to `vertex.exe`, and place it in a folder on your `PATH`.
+  </TabItem>
+</Tabs>
+
+## Verify
+
+```
+vertex --version
+```
+
+You should see a version string. If you see `command not found`, the
+binary is not on your `PATH`; double-check the install location.
+
+## What you get
+
+The `vertex` binary is everything you need to:
+
+- **Run** `.vtx` files locally: `vertex run hello.vtx`
+- **Test** your code: `vertex test`
+- **Build** Apex classes for deployment: `vertex build`
+- **Serve** the language server for your editor: `vertex lsp`
+
+See [The vertex CLI](/tooling/cli/) for the full command reference.
+
+## Optional: Salesforce tooling
+
+To deploy the Apex classes that `vertex build` emits, you will also
+want the [Salesforce CLI (`sf`)](https://developer.salesforce.com/tools/salesforcecli).
+It is not required for writing or running Vertex locally; only for
+pushing the generated code to an org.
+
+<Aside type="tip">
+Want to try Vertex without installing anything on `PATH`? A downloaded
+binary is directly runnable. You can stash it wherever you like and
+invoke it with its full path.
+</Aside>
+
+## Next
+
+Run your first program: [Your first Vertex program](/getting-started/first-program/).

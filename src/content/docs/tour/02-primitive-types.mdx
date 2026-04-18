@@ -1,6 +1,6 @@
 ---
 title: Primitive Types
-description: Vertex's built-in types — numbers, booleans, strings, and Void.
+description: Vertex's built-in types. Numbers, booleans, strings, and Void.
 sidebar:
   order: 2
 ---
@@ -17,7 +17,7 @@ Vertex has eight built-in types:
 | `Decimal` | decimal with `d` suffix         | `9.99d`    |
 | `Bool`    | `true` or `false`               | `true`     |
 | `String`  | double-quoted                   | `"hello"`  |
-| `Id`      | no literal — comes from Salesforce DML | —   |
+| `Id`      | no literal. Comes from Salesforce DML |,   |
 | `Void`    | the keyword `Void`              | `Void`     |
 
 ## Numbers
@@ -33,7 +33,7 @@ debug price * 2.0d     // 39.98
 ```
 
 <Aside type="caution">
-**No implicit widening.** Both sides of an arithmetic expression must be the same numeric type. `42 + 3.14` is a compile error — you must explicitly convert first.
+**No implicit widening.** Both sides of an arithmetic expression must be the same numeric type. `42 + 3.14` is a compile error. You must explicitly convert first.
 </Aside>
 
 ## Strings
@@ -61,7 +61,7 @@ debug "count: " + 42   // "count: 42"
 
 ## Void
 
-`Void` is a first-class value — not just an absence of a return type. A function
+`Void` is a first-class value. Not just an absence of a return type. A function
 that only performs side effects declares `: Void` and ends with `Void` as its
 last expression:
 
@@ -78,11 +78,11 @@ Type annotations on local bindings are optional when the type can be inferred:
 
 ```vertex
 let x = 42          // Int, inferred
-let y: Int = 42     // Int, explicit — same thing
+let y: Int = 42     // Int, explicit. Same thing
 ```
 
 ## Next steps
 
-- [Primitive Types reference](/reference/basics/primitive-types/)
-- [String Interpolation](/reference/expressions/string-interpolation/)
-- [Operators](/reference/expressions/operators/)
+- [Primitive Types reference](/reference/primitive-types/)
+- [String Interpolation](/reference/string-interpolation/)
+- [Operators](/reference/operators/)

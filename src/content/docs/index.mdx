@@ -1,73 +1,147 @@
 ---
-title: Introduction
-description: Vertex — a statically typed language that compiles to Salesforce Apex.
+title: Vertex
+description: A statically typed language for Salesforce that compiles to Apex and runs locally too.
 template: splash
 hero:
   title: Vertex
-  tagline: A statically typed language that compiles to Salesforce Apex. Safer, more ergonomic, locally runnable.
+  tagline: A statically typed language for Salesforce. Compiles to Apex, runs locally too.
   actions:
-    - text: Language Tour
-      link: /tour/01-hello-world/
+    - text: Get Started
+      link: /getting-started/
       icon: right-arrow
       variant: primary
-    - text: Reference
-      link: /reference/basics/running-vertex/
+    - text: Language Tour
+      link: /tour/01-hello-world/
       icon: open-book
+    - text: Coming from Apex
+      link: /coming-from-apex/
+      icon: random
 ---
 
 import { Card, CardGrid, Aside } from '@astrojs/starlight/components';
 
+<Aside type="caution" title="Vertex is very early">
+The language, standard library, and tooling are all still moving. Expect
+breaking changes between releases, pin to a specific version if you use
+it on something real, and please
+[file issues](https://github.com/vertex-run/vertex/issues/new/choose)
+when things break or feel wrong. Feedback right now is what shapes
+where Vertex goes next.
+</Aside>
+
+Here is a taste:
+
+```vertex
+fn validate_age(age: Int): Result<Int, String> {
+    if age < 0 {
+        Error("age cannot be negative")
+    } else if age > 150 {
+        Error("age is unrealistically large")
+    } else {
+        Ok(age)
+    }
+}
+
+fn label(age: Int): String {
+    if age < 18 { "minor" } else { "adult" }
+}
+
+debug match validate_age(25) {
+    Ok(a)    => "${label(a)}, age ${a}",
+    Error(e) => "invalid: ${e}",
+}
+// adult, age 25
+```
+
+Sum types, exhaustive pattern matching, string interpolation, and a
+`Result` the compiler makes you deal with. Paste it into a file and
+run it with `vertex run`, no org required.
+
+## What you get
+
 <CardGrid>
-  <Card title="Errors are values" icon="warning">
-    No exceptions in user code. All fallible functions return `Result<T, E>` and must be explicitly handled.
+  <Card title="If it compiles, it runs" icon="approve-check">
+    Static types, exhaustive `match`, `Option<T>` in place of `null`,
+    and `Result<T, E>` in place of exceptions. The compiler catches a
+    lot of what ships as a production bug in Apex.
   </Card>
-  <Card title="Null safety" icon="approve-check">
-    There is no `null`. Absence of a value is expressed as `Option<T>`, enforced by the compiler.
+  <Card title="Features from this decade" icon="rocket">
+    Sum types, pattern matching, `Option`, `Result`, a pipe operator,
+    type inference, immutability by default. The things Apex
+    developers have wanted for a while.
   </Card>
-  <Card title="Immutable by default" icon="seti:lock">
-    All bindings are immutable. Mutation requires the explicit `mutable` keyword — it looks like a code smell on purpose.
+  <Card title="One way to do things" icon="seti:lock">
+    No class inheritance, no static/instance split, no implicit null.
+    Fewer ways for a program to surprise you.
   </Card>
-  <Card title="Locally runnable" icon="laptop">
-    Build, test, and iterate without connecting to a Salesforce org. A JIT runner executes Vertex programs locally.
+  <Card title="Local dev loop" icon="laptop">
+    Write, run, and test without touching a Salesforce org. The JIT
+    runs your code locally in milliseconds. When you're ready,
+    `vertex build` emits Apex classes you deploy the usual way.
+  </Card>
+  <Card title="Errors that actually help" icon="information">
+    Every diagnostic has a title, notes, a `help:` line, and spans on
+    the relevant places. Readable by a human and structured enough for
+    an LLM pair.
   </Card>
 </CardGrid>
 
-## Philosophy
+## A few quick comparisons
 
-1. **One way to do things.** When there are multiple ways to express the same idea, Vertex picks one and only exposes that.
-2. **Errors are values.** No exceptions in user code. Failures are expressed as `Result<T, E>` and must be explicitly handled.
-3. **Immutability by default.** Mutation is possible but visible — it looks like a code smell on purpose.
-4. **Strong FFI.** Vertex can call Apex code and Apex can call Vertex-generated code. Incremental adoption is a first-class use case.
-5. **Locally runnable.** A full Vertex project can be built, tested, and iterated on without connecting to a Salesforce org.
-
-## Influences
-
-| Language | What we take from it |
-|----------|----------------------|
-| Gleam | `Result`/`Option` types, pipe operator `\|>`, immutability, no inheritance |
-| Kotlin | Named parameters, `data class`-style records, `when` exhaustive matching |
-| TypeScript | Type inference style, string interpolation |
-| Rust | `?` error propagation operator, explicit mutability |
-| F# | Railway Oriented Programming / `result` blocks, pipeline thinking |
-| Apex | Familiar syntax baseline, `@Annotation` syntax, interface names |
-
-## What Vertex is NOT
-
-- Not a general-purpose language. It targets the Salesforce platform.
-- Not trying to replicate all of Apex. Existing Apex code stays as Apex; Vertex is for new code.
-- Not a scripting language. It is statically typed and compiled (to Apex) or JIT-executed locally.
-
-### Mutability
-
-All bindings are immutable by default (`let`). Mutable bindings require the explicit `mutable` keyword:
+No more null pointers. Absence is `Option<T>` and you have to handle
+both cases to get at the value:
 
 ```vertex
-let x = 42              // immutable
-mutable let y = 42      // mutable - stands out visually
-y = 100                 // reassignment allowed
+type User { User(name: String) }
+
+fn greet(user: Option<User>): String {
+    user
+        .map(fn(u: User): String { "Hello, ${u.name}!" })
+        .unwrapOr("Hello, stranger!")
+}
+
+debug greet(Some(User(name: "Alice")))   // Hello, Alice!
+debug greet(None)                         // Hello, stranger!
 ```
 
-### Syntax
+No more untyped `throw`. Fallible functions return `Result<T, E>`, and
+`?` propagates the error when you want the happy path to read cleanly:
 
-- Braces `{}` for blocks. No semicolons — statements end at newlines or closing delimiters.
-- File = module. A file `accounts.vtx` defines the module `accounts`. No explicit module declaration needed.
+```vertex
+fn check_positive(n: Int): Result<Int, String> {
+    if n < 0 { Error("negative: ${n}") } else { Ok(n) }
+}
+
+fn process(raw: Int): Result<String, String> {
+    let n = check_positive(raw)?
+    Ok(if n < 18 { "minor" } else { "adult" })
+}
+
+debug process(25)    // Ok(value: adult)
+debug process(-1)    // Error(error: negative: -1)
+```
+
+And no more waiting on a deploy every time you want to try something:
+
+```
+$ vertex run hello.vtx
+Hello, Alice!
+```
+
+## About
+
+Vertex is a statically typed language that compiles to Salesforce Apex.
+It borrows from Gleam (`Result`, `Option`, the pipe), Kotlin (named
+parameters, records), Rust (`?`, explicit mutability), F# (pipeline
+thinking), and TypeScript (type inference feel), over a syntactic
+baseline that should look familiar if you write Apex.
+
+It targets the Salesforce platform; it is not a general-purpose
+language. Existing Apex is meant to stay as Apex. Vertex is for new
+code and incremental adoption via a strong FFI.
+
+Head to [Getting Started](/getting-started/) to install and run your
+first program, or dig into the [Language Tour](/tour/01-hello-world/).
+If you prefer reading a real codebase, there is a sample library
+management app at
+[vertex-run/vertex-library-management](https://github.com/vertex-run/vertex-library-management).

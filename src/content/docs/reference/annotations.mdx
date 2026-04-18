@@ -1,13 +1,13 @@
 ---
 title: Annotations
-description: Annotations in Vertex — @Test for testing, AuraEnabled, SObject, sharing modifiers.
+description: Annotations in Vertex, @Test for testing, AuraEnabled, SObject, sharing modifiers.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
 <Aside>
 Most annotations are Salesforce-specific: they are parsed and forwarded to the
-Apex codegen and have no JIT semantics. **`@Test` is the exception** — it is
+Apex codegen and have no JIT semantics. **`@Test` is the exception**. It is
 fully understood by the Vertex toolchain: the checker enforces its rules, the
 test runner discovers and executes `@Test` functions locally, and the codegen
 emits `@IsTest` on both the function and (for `*_test.vtx` files) the class.
@@ -44,7 +44,7 @@ declaration:
 ```vertex
 @WithoutSharing
 
-import lang/db
+import lang.db
 
 pub fn run(): Void {
     db.insertAccount(...)
@@ -58,7 +58,7 @@ pub fn run(): Void {
 | `@WithoutSharing`   | `public without sharing class Module_Name { ... }`            |
 | `@InheritedSharing` | `public inherited sharing class Module_Name { ... }`          |
 
-**Default is `with sharing`** — this is the safe default per Apex security best
+**Default is `with sharing`**. This is the safe default per Apex security best
 practices and aligns with PMD's `ApexSharingViolations` rule.
 
 Rules:

@@ -1,0 +1,111 @@
+---
+title: Your first Vertex program
+description: Write a .vtx file, run it locally, and see output in milliseconds.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+This page assumes you have already [installed Vertex](/getting-started/install/)
+and `vertex --version` prints a version.
+
+## Hello, Vertex
+
+Create a file called `hello.vtx`:
+
+```vertex
+debug "hello, vertex!"
+```
+
+Run it:
+
+```
+$ vertex run hello.vtx
+hello, vertex!
+```
+
+That is it. No `main` function, no class wrapper, no `sfdx-project.json`,
+no deploy. Vertex executes top-level statements in order, top to bottom.
+
+## `debug` is the output function
+
+`debug` is the only way to produce observable output. It is an
+**expression**: it evaluates its argument, prints it, and returns the
+value so you can inspect mid-pipeline.
+
+```vertex
+debug "hello"
+debug 42
+debug true
+
+let sum = debug 1 + 2      // prints 3, then binds sum = 3
+```
+
+## Bindings
+
+```vertex
+let name = "Alice"
+let age  = 30
+
+debug "Hello, ${name}! You are ${age}."
+```
+
+All bindings are immutable by default. If you need to reassign:
+
+```vertex
+mutable let counter = 0
+counter = counter + 1
+counter = counter + 1
+debug counter       // 2
+```
+
+The visible `mutable` keyword is deliberate. Reassignment is possible
+but it stands out. See [Bindings](/reference/bindings/).
+
+## Doing something useful
+
+Here is a complete program that pitches several of the ideas the tour
+will cover in more depth:
+
+```vertex
+fn label(age: Int): String {
+    if age < 18 { "minor" } else { "adult" }
+}
+
+fn describe(name: String, age: Int): String {
+    "${name} is ${label(age)} (age ${age})"
+}
+
+debug describe("Alice", 30)
+debug describe("Bob", 15)
+```
+
+Run it:
+
+```
+$ vertex run greet.vtx
+Alice is adult (age 30)
+Bob is minor (age 15)
+```
+
+## What just happened
+
+- **No deploy.** Vertex ran your code locally via its built-in JIT.
+- **Compile-time guarantees.** The types of `name`, `age`, and the
+  return of `label` were all checked before anything ran.
+- **Millisecond feedback.** No org, no build step, no waiting.
+
+<Aside type="tip">
+Vertex also runs on Salesforce. The same `hello.vtx` can be executed on
+your org with `vertex run --sf --org <alias> hello.vtx`. The JIT is the
+fast path for development; the org is where you ship.
+</Aside>
+
+## Next
+
+- [Your first Salesforce project](/getting-started/first-salesforce-project/):
+  move from single files to a proper multi-file project that builds to
+  Apex and deploys.
+- [Language Tour](/tour/01-hello-world/): a guided walk through every
+  language feature.

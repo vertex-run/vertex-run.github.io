@@ -16,7 +16,7 @@ fn add(
 
 - The last expression in the body is the return value.
 - Explicit `return` is for early exits only.
-- All module-level `fn` declarations are hoisted — mutual recursion works.
+- All module-level `fn` declarations are hoisted. Mutual recursion works.
 - Trailing commas are allowed in parameter lists and argument lists.
 
 ### Return type inference
@@ -34,7 +34,7 @@ fn noop() { }                           // inferred: Void
 boundaries explicit and self-documenting:
 
 ```vertex
-pub fn run(): Void { ... }   // OK — explicit
+pub fn run(): Void { ... }   // OK. Explicit
 pub fn bad() { ... }         // Error E135: pub fn missing return type
 ```
 
@@ -70,8 +70,8 @@ at the start of the function body, exactly like a `let` destructuring.
 ```vertex
 type Point { Point(x: Double, y: Double) }
 
-fn distanceFromOrigin(Point(x:, y:): Point): Double {
-    (x * x + y * y).sqrt()
+fn sumSquares(Point(x:, y:): Point): Double {
+    x * x + y * y
 }
 ```
 
@@ -93,7 +93,7 @@ fn scale(n: Double, Point(x:, y:): Point): Double {
 ```
 
 **Restrictions:**
-- Destructured parameters are **positional only** — they have no call-site label and cannot be passed by name.
+- Destructured parameters are **positional only**. They have no call-site label and cannot be passed by name.
 - Default values (`= expr`) are not allowed on destructured parameters.
 - Closures do not support parameter destructuring; use a `let` binding inside the body instead.
 
@@ -154,7 +154,7 @@ fn apply(f: Transform<Int, String>, x: Int): String { f(x) }
 ```
 
 Aliases are **transparent**: `fn(Int): Int` and `IntOp` are interchangeable.
-Function type aliases are compile-time only — they have no representation in generated Apex.
+Function type aliases are compile-time only. They have no representation in generated Apex.
 
 ### `|>` pipe operator
 
@@ -172,8 +172,8 @@ Use `_` as a placeholder to control where the piped value lands:
 fn add(a: Int, b: Int): Int { a + b }
 fn mul(a: Int, b: Int): Int { a * b }
 
-debug 2 |> add(_, 3)                // 5  — same as add(2, 3)
-debug 2 |> add(_, 3) |> mul(10, _)  // 50 — mul(10, add(2, 3))
+debug 2 |> add(_, 3)                // 5 . Same as add(2, 3)
+debug 2 |> add(_, 3) |> mul(10, _)  // 50. Mul(10, add(2, 3))
 
 fn greet(greeting: String, name: String): String {
     greeting + ", " + name + "!"

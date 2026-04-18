@@ -1,0 +1,96 @@
+---
+title: Editor integration
+description: LSP capabilities, the Zed extension, and the tree-sitter grammar.
+sidebar:
+  order: 4
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Vertex ships a Language Server (LSP) and a tree-sitter grammar. Any
+editor that can drive an LSP server and load a tree-sitter grammar can
+provide a first-class Vertex experience. The Zed extension is the
+reference integration.
+
+For step-by-step install instructions, see
+[Editor setup](/getting-started/editor-setup/). This page documents
+what the LSP actually does.
+
+## LSP capabilities
+
+| Capability              | Status    | Notes                                                          |
+|-------------------------|-----------|----------------------------------------------------------------|
+| Diagnostics (push)      | Yes       | Real-time as you type. Every checker error and warning flows through. |
+| Completions             | Yes       | Keywords, built-in types, annotation names, stdlib members, identifiers in scope. |
+| Hover                   | Partial   | Shows types for identifiers with a meaningful declaration site. |
+| Go to definition        | Partial   | For top-level declarations with a resolvable source. |
+| Formatting              | No        | Formatter not yet available.                                   |
+| Rename                  | No        | Not yet supported.                                             |
+
+Diagnostic spans are first-class: a red squiggle lands exactly at the
+offending token, and multi-location errors (for example, conflicting
+declarations) highlight every related span.
+
+## The Zed extension
+
+The extension at
+[vertex-run/zed-vertex](https://github.com/vertex-run/zed-vertex)
+wires everything up automatically:
+
+- Downloads the `vertex` binary for your platform, or uses the one on
+  your `PATH`.
+- Launches `vertex lsp` for each `.vtx` buffer.
+- Loads the [tree-sitter-vertex](https://github.com/vertex-run/tree-sitter-vertex)
+  grammar for highlighting.
+
+Install it from Zed's extensions pane.
+
+## Using the LSP with other editors
+
+Launch command:
+
+```
+vertex lsp
+```
+
+This reads and writes the LSP protocol on stdin/stdout. No arguments,
+no initialization options.
+
+Client configuration varies by editor. In general you need:
+
+- **Language ID**: `vertex`
+- **File pattern**: `*.vtx`
+- **Server command**: `vertex lsp` (with `vertex` on `PATH`)
+- **Workspace root**: the nearest ancestor containing `sfdx-project.json`
+
+<Aside type="tip">
+If completions or diagnostics look off, first check that the LSP sees
+your project: it needs `sfdx-project.json` in a parent directory to
+resolve imports. A single-file `.vtx` with no imports works anywhere.
+</Aside>
+
+## Tree-sitter grammar
+
+The grammar at
+[vertex-run/tree-sitter-vertex](https://github.com/vertex-run/tree-sitter-vertex)
+is the source of truth for syntax highlighting. Editors that load
+tree-sitter grammars directly (Neovim with `nvim-treesitter`, Helix,
+Zed) can use it without the LSP at all, though you lose diagnostics
+and completions.
+
+Highlight queries cover keywords, types, string interpolation,
+operators, annotations, and comments.
+
+## Reporting issues
+
+Editor problems often come from one of three places:
+
+1. **The LSP itself**, for diagnostics, completions, or hover bugs.
+   File against [vertex-run/vertex](https://github.com/vertex-run/vertex/issues).
+2. **The grammar**, for highlighting glitches or wrong tokenization.
+   File against [vertex-run/tree-sitter-vertex](https://github.com/vertex-run/tree-sitter-vertex/issues).
+3. **The extension**, for install or binary-download issues.
+   File against [vertex-run/zed-vertex](https://github.com/vertex-run/zed-vertex/issues).
+
+A one-line reduced example and the LSP log (if your editor exposes it)
+is usually enough to identify which one it is.

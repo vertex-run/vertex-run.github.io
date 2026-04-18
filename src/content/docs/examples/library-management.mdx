@@ -1,0 +1,49 @@
+---
+title: Library Management (sample app)
+description: A full multi-module Vertex Salesforce app you can read, clone, and deploy.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The examples on this site are mostly focused snippets. If you want to
+see what a real multi-module Vertex codebase looks like, there is a
+dedicated sample repo:
+
+**[github.com/vertex-run/vertex-library-management](https://github.com/vertex-run/vertex-library-management)**
+
+The app models a virtual library: catalog browsing, member checkouts,
+return history, inventory limits. The Vertex source lives in
+[`src/`](https://github.com/vertex-run/vertex-library-management/tree/main/src),
+organized into `domain/` (pure business logic + tests),
+`controllers/` (`@AuraEnabled` entry points), and top-level modules
+for the `@SObject` types.
+
+It is a good thing to read after the
+[Language Tour](/tour/01-hello-world/) when you want to see how the
+pieces fit together at scale: domain types, DML through `Result`,
+tests that run locally without an org, and LWC-facing controllers.
+
+<Aside type="note">
+The sample evolves alongside Vertex. Expect it to change as the
+language does, and please
+[file issues](https://github.com/vertex-run/vertex-library-management/issues/new)
+if something no longer compiles against a newer `vertex` release.
+</Aside>
+
+## Running it yourself
+
+Clone the repo and follow the README. The short version:
+
+```
+$ git clone https://github.com/vertex-run/vertex-library-management.git
+$ cd vertex-library-management
+$ sf org create -f config/project-scratch-def.json -a vertex-lib
+$ vertex build
+$ sf project deploy start --target-org vertex-lib
+```
+
+For the day-to-day development loop (running tests locally, deploying
+when you are ready), see the
+[Building for Salesforce](/guides/salesforce-projects/) guide.

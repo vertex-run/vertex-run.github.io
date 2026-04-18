@@ -13,7 +13,7 @@ sidebar:
 | `Decimal` | decimal point with `d` suffix   | `9.99d`      |
 | `Bool`    | `true` / `false`                | `true`       |
 | `String`  | double-quoted                   | `"hello"`    |
-| `Id`      | no literal — runtime only       | (from DML)   |
+| `Id`      | no literal. Runtime only       | (from DML)   |
 | `Void`    | the keyword `Void`              | `Void`       |
 
 `Void` is a real first-class value. A function that only produces side effects
@@ -28,4 +28,4 @@ fn log(
 }
 ```
 
-No implicit widening between numeric types — both sides of an arithmetic expression must be the same type.
+No implicit widening between numeric types. Both sides of an arithmetic expression must be the same type.

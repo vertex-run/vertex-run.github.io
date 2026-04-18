@@ -1,0 +1,31 @@
+---
+title: CLI & Tooling
+description: The vertex command-line tool, project structure, and editor integration.
+sidebar:
+  order: 1
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+Everything you need to drive Vertex from the command line and your
+editor.
+
+## In this section
+
+<CardGrid>
+  <Card title="The vertex CLI" icon="setting">
+    `vertex run`, `vertex test`, `vertex build`, `vertex lsp`: full
+    command reference with flags and examples.
+    [Read more](/tooling/cli/)
+  </Card>
+  <Card title="Project structure" icon="document">
+    How Vertex locates source, what `sfdx-project.json` controls, and
+    where generated Apex lands.
+    [Read more](/tooling/project-structure/)
+  </Card>
+  <Card title="Editor integration" icon="pencil">
+    LSP capabilities, tree-sitter grammar, and what each feature
+    (diagnostics, completions, hover) depends on.
+    [Read more](/tooling/editor-integration/)
+  </Card>
+</CardGrid>

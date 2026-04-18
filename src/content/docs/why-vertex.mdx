@@ -1,0 +1,184 @@
+---
+title: Why Vertex?
+description: What Vertex actually gives you over Apex, with examples.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Apex is fine. It does the job, it runs on every Salesforce org, and if
+you have been writing it for a decade you know where the sharp edges
+are. The sharp edges are the problem. Vertex is an attempt to fix a
+specific handful of them while keeping the code deployable as Apex.
+
+What follows is the list of things you get from Vertex that you do not
+get from Apex, each with an example.
+
+## The compiler catches more
+
+Vertex is statically typed, `match` is checked for exhaustiveness,
+there is no `null`, and fallible things return `Result<T, E>`. Put
+together, a lot of what usually surfaces as a production bug in Apex
+just fails to compile.
+
+```vertex
+type Payment {
+    Card(last4: String),
+    Bank(routing: String, account: String),
+    Cash,
+}
+
+fn describe(p: Payment): String {
+    match p {
+        Card(last4:)             => "card ending ${last4}",
+        Bank(routing:, account:) => "bank ${routing}/${account}",
+        Cash                     => "cash",
+    }
+}
+
+debug describe(Card(last4: "1234"))   // card ending 1234
+```
+
+Add a `Crypto` variant next year and every `match` that forgot to
+handle it stops compiling. You find out at `vertex build` time instead
+of in production.
+
+See [Sum Types](/reference/sum-types/),
+[Pattern Matching](/reference/pattern-matching/),
+[Result](/reference/result/), and
+[Option](/reference/option/).
+
+## Features Apex has been missing
+
+Apex has been on the Salesforce platform since 2008. Vertex lets you
+write what you have probably been wishing the language had for a while:
+
+```vertex
+let total =
+    [1, 2, 3, 4, 5]
+        .filter(fn(n: Int): Bool { n > 2 })
+        .map(fn(n: Int): Int { n * n })
+        .fold(0, fn(acc: Int, n: Int): Int { acc + n })
+
+debug total   // 50
+```
+
+That is a list literal, the pipe-friendly method chain, higher-order
+functions, closures, generics inferred end to end, and immutable
+bindings. You will not find yourself typing `List<Integer>` three
+times to do this.
+
+See [Functions](/reference/functions/) and
+[Collections](/reference/collections/).
+
+## Less to remember
+
+Vertex picks one way to do each thing and skips the rest:
+
+- No class inheritance. Composition with interfaces.
+- No static vs instance split. There are no static methods; module-level
+  functions exist, and that is the whole story.
+- No `null`. `Option<T>` handles absence and the compiler checks you
+  handle it.
+- No exceptions in user code. `Result<T, E>` handles failure.
+- Immutability by default. `mutable` is a keyword you type on the
+  declarations that need to change.
+- File = module. No header, no `package`, no manifest.
+
+Fewer features is fine if what you remove were the features that
+caused the bugs. Most of this list is "remove something that bit us".
+
+See [Modules & Imports](/reference/imports/) and
+[Bindings](/reference/bindings/).
+
+## A local dev loop
+
+Apex development lives on the platform. Every iteration wants a
+deploy; every test wants test classes on the org; the feedback loop
+runs in minutes.
+
+Vertex has a JIT. Write a file, run it, see what happens:
+
+```
+$ cat hello.vtx
+debug "hello, vertex!"
+
+$ vertex run hello.vtx
+hello, vertex!
+```
+
+Tests work the same way, with a simulated DML layer so even
+data-access code runs without an org:
+
+```
+$ vertex test src/billing/invoice_test.vtx
+✓ invoice totals include tax
+✓ zero-line invoice is rejected
+2 passed, 0 failed  (47ms)
+```
+
+When you are ready to deploy, `vertex build` emits Apex class files
+your existing Salesforce tooling picks up directly.
+
+See [The vertex CLI](/tooling/cli/) and
+[Testing](/reference/testing/).
+
+## Errors that actually help
+
+Most compilers write messages for the compiler author. Vertex writes
+them for the reader, who is almost always stuck. Every diagnostic
+comes with a title in plain English, notes about what the compiler
+saw, an actionable `help:` line, and spans on both the mistake and the
+declaration that conflicts with it:
+
+```
+error[E203]: cannot assign to immutable binding
+
+  at hello.vtx:3:3
+    |
+  2 | let counter = 0
+  3 | counter = counter + 1
+    | ^^^^^^^ 'counter' cannot be reassigned
+
+notes: 'counter' was declared with 'let',
+       which makes it immutable.
+
+help:  Change 'let' to 'mutable let' to
+       allow reassignment:
+
+           mutable let counter = 0
+
+related: 'counter' first declared here
+    at hello.vtx:2:5
+```
+
+The format is deliberate, and one of the reasons is that an LLM coding
+assistant can parse it cleanly: the error code identifies the category,
+the related span tells the model which other line to look at, and the
+`help:` section gives a literal replacement it can apply.
+
+See [Compiler Diagnostics](/reference/diagnostics/).
+
+## What Vertex does not try to do
+
+- It is not a general-purpose language. It targets the Salesforce
+  platform and emits Apex.
+- It is not an Apex replacement. Existing Apex stays as Apex; Vertex is
+  for new code and incremental adoption.
+- It is not a scripting language, even though `vertex run` feels like
+  one. It is statically typed and compiled (to Apex) or JIT-executed
+  locally.
+
+## Where it borrows from
+
+| Language   | What Vertex takes from it                                                            |
+|------------|--------------------------------------------------------------------------------------|
+| Gleam      | `Result` / `Option`, pipe-friendly method chaining, immutability, no inheritance     |
+| Kotlin     | Named parameters, record-style types, exhaustive `match`                             |
+| TypeScript | Type-inference feel, string interpolation                                            |
+| Rust       | `?` error propagation, explicit mutability                                           |
+| F#         | Railway Oriented Programming, pipeline thinking                                      |
+| Apex       | Syntactic baseline, `@Annotation` syntax, interface names                            |
+
+If this sounds like something you want to try, head to
+[Getting Started](/getting-started/). If you want the full walkthrough,
+start with the [Language Tour](/tour/01-hello-world/).

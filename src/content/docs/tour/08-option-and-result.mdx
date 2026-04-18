@@ -7,12 +7,12 @@ sidebar:
 
 import { Aside } from '@astrojs/starlight/components';
 
-## No null — use `Option<T>`
+## No null: use `Option<T>`
 
 Vertex has no `null`. Absence of a value is expressed as `Option<T>`, which is a sum type with two variants:
 
-- `Some(value)` — a value is present
-- `None` — no value
+- `Some(value)`. A value is present
+- `None`. No value
 
 ```vertex
 fn find_user(id: Int): Option<String> {
@@ -45,12 +45,12 @@ let label = name
 let result = name.toResult("user not found")
 ```
 
-## No exceptions — use `Result<T, E>`
+## No exceptions: use `Result<T, E>`
 
 Vertex has no `throw`/`try`/`catch`. Fallible operations return `Result<T, E>`:
 
-- `Ok(value)` — success
-- `Error(e)` — failure
+- `Ok(value)`. Success
+- `Error(e)`. Failure
 
 ```vertex
 fn safe_divide(a: Int, b: Int): Result<Int, String> {
@@ -104,7 +104,7 @@ let opt = r.toOption()   // Option<Int>
 
 ## Optional fields in constructors
 
-Any field typed `Option<T>` in a constructor can be omitted — it defaults to `None`:
+Any field typed `Option<T>` in a constructor can be omitted. It defaults to `None`:
 
 ```vertex
 type Contact {
@@ -119,4 +119,4 @@ let c2 = Contact(name: "Bob", phone: Some("+1 555"))  // phone: Some
 
 - [Option\<T\> reference](/reference/option/)
 - [Result\<T, E\> reference](/reference/result/)
-- [Pattern Matching](/reference/pattern-matching/) — match on both types
+- [Pattern Matching](/reference/pattern-matching/): match on both types

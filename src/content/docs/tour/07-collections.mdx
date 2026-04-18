@@ -74,7 +74,7 @@ let zeros = List.filled(4, 0)
 
 ## Map
 
-Maps are key-value stores. There is no subscript syntax — use `get(key)`:
+Maps are key-value stores. There is no subscript syntax. Use `get(key)`:
 
 ```vertex
 let scores: Map<String, Int> = {"Alice": 95, "Bob": 87}
@@ -83,7 +83,7 @@ let empty: Map<String, Int> = Map.empty()
 debug scores.get("Alice")   // Some(value: 95)
 debug scores.get("Carol")   // None
 
-let updated = scores.put("Carol", 92)    // returns a new map — original unchanged
+let updated = scores.put("Carol", 92)    // returns a new map. Original unchanged
 for #(name, score) in updated.entries() {
     debug "${name}: ${score}"
 }
@@ -111,5 +111,5 @@ debug a.difference(b)         // #{1, 2}
 
 ## Next steps
 
-- [Collections reference](/reference/collections/) — full method tables for List, Map, Set
-- [for..in Loop](/reference/for-in/) — pattern destructuring in loop heads
+- [Collections reference](/reference/collections/): full method tables for List, Map, Set
+- [for..in Loop](/reference/for-in/): pattern destructuring in loop heads

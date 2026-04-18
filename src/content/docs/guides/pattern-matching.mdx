@@ -1,0 +1,169 @@
+---
+title: Pattern matching in practice
+description: Real patterns beyond the basics, including guards, nested destructuring, and list patterns.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`match` is Vertex's main decision-making construct. Once you are
+comfortable with the basics (Chapter 6 of the tour), you will start
+reaching for it instead of `if` chains in almost every case. This
+guide collects the patterns that are not obvious from the reference.
+
+## Matching is the default, `if` is the exception
+
+A rough heuristic: if the decision involves *values*, use `if`; if it
+involves *shapes*, use `match`.
+
+```vertex
+// Values: a simple inequality
+if total > 1000 { apply_discount() } else { full_price() }
+
+// Shapes: a sum-type variant
+match payment {
+    Card(last4:) if fraud_check_failed(last4) => Error(Fraud),
+    Card(..)                                  => Ok(Authorized),
+    Bank(..)                                  => Ok(PendingClearance),
+    Cash                                      => Ok(Authorized),
+}
+```
+
+An `if` chain that dispatches on the variant of a sum type is almost
+always a `match` waiting to happen.
+
+## Guards let you combine values and shapes
+
+Guards are the `if` inside an arm. They let one arm match "a Card
+variant whose `last4` looks suspicious" without carving it out as a
+separate type.
+
+```vertex
+match transaction {
+    Sale(amount:) if amount > limit => Error(OverLimit),
+    Sale(amount:)                   => Ok(amount),
+    Refund(amount:)                 => Ok(-amount),
+}
+```
+
+Order matters: the first arm that matches wins. Put the guarded arm
+*before* the unguarded arm for the same variant.
+
+## Destructure records at the call site
+
+Single-variant record types destructure cleanly:
+
+```vertex
+type Invoice {
+    Invoice(id: Id, customer: Id, total: Decimal, tax: Decimal)
+}
+
+fn describe(inv: Invoice): String {
+    let Invoice(customer:, total:, tax:, ..) = inv
+    "customer ${customer} owes ${total} plus ${tax} tax"
+}
+```
+
+The `..` silently ignores the unmentioned fields (here, `id`). If you
+want different names, use the long form `field: binding`:
+
+```vertex
+match inv {
+    Invoice(total: t, tax:, ..) => debug "${t + tax}",
+}
+```
+
+## Nested patterns
+
+Patterns nest. Match a `Result` of a sum type variant in one step:
+
+```vertex
+match charge_card(amount) {
+    Ok(Authorized)                   => receipt(),
+    Ok(PendingClearance)             => "wait for it",
+    Error(CardDecline(Insufficient)) => "try a different card",
+    Error(CardDecline(Expired))      => "card expired",
+    Error(NetworkFailure)            => "we'll retry in a bit",
+}
+```
+
+Each layer is a separate pattern. This tends to replace two or three
+levels of nested `match` in other languages.
+
+## List patterns
+
+Lists match by position, with `..` collecting the tail.
+
+```vertex
+match events {
+    []                  => "nothing happened",
+    [e]                 => "one event: ${e.name}",
+    [first, ...rest]    => "first: ${first.name}, then ${rest.size()} more",
+}
+```
+
+<Aside type="tip">
+`..` inside a list pattern captures the tail (or silently drops it).
+Inside a variant pattern, `..` ignores unmentioned fields. Inside a
+list *expression*, three dots `...xs` is the spread. Three constructs,
+three syntaxes; keep them straight.
+</Aside>
+
+## OR patterns for shared arms
+
+When two variants take the same action, group them with `|`:
+
+```vertex
+match state {
+    Pending | InReview => debug "waiting",
+    Approved           => debug "green light",
+    Rejected           => debug "blocked",
+}
+```
+
+OR patterns cannot bind different shapes (you cannot `Card(x) | Bank(x)`)
+because the bound names would have different meanings.
+
+## When exhaustiveness bites
+
+The compiler checks `match` arms for exhaustiveness. If you add a new
+variant to a sum type, every `match` that forgot to handle it fails to
+compile. That is the point.
+
+When you genuinely do not care about the other variants, use a
+wildcard:
+
+```vertex
+match status {
+    Approved => ship(),
+    _        => hold(),
+}
+```
+
+The trap: a careless wildcard swallows the variant you added last
+month. Use `_` only when "everything else" really is one action.
+
+## `let assert` for invariants
+
+`let assert` checks at runtime that a pattern matches and binds the
+inner values, crashing if it doesn't. It is the right tool for
+assertions that are *not* user input:
+
+```vertex
+let assert Ok(config) = load_config()   // dev-time invariant
+let assert [first, ..] = required_list  // provable elsewhere
+```
+
+For real user input, return `Result` and match properly.
+
+## Reading order for the reference
+
+If you want the full rulebook:
+
+- [Pattern Matching reference](/reference/pattern-matching/): the
+  authoritative list of pattern forms.
+- [Sum Types reference](/reference/sum-types/): how variants are
+  declared and what you can destructure.
+- [Control Flow reference](/reference/control-flow/): how `match` fits
+  alongside `if` and `for..in`.

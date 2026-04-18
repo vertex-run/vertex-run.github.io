@@ -3,7 +3,7 @@ title: Salesforce Integration
 description: SObject types, DML operations, Id type, and AuraError in Vertex.
 ---
 
-## `@SObject` — Salesforce Object types
+## `@SObject`: Salesforce Object types
 
 The `@SObject` annotation marks a single-variant `type` as a Salesforce Object.
 `@SObject` types are emitted as native Apex SObject constructor calls instead of
@@ -42,7 +42,7 @@ fn insert_and_update(
 - `Id: None` or omitting `Id` → no `Id` field in the emitted Apex (record has no Id)
 - `Id: Some(record_id)` → emits `Id = record_id` in the Apex SObject constructor
 
-## `DmlError` — DML error type
+## `DmlError`: DML error type
 
 `DmlError` is a built-in type with a single `message: String` field. It is the error
 type returned by all `Database.*` DML operations.
@@ -63,17 +63,17 @@ match result {
 }
 ```
 
-## `Database.*` — DML operations
+## `Database.*`: DML operations
 
 All DML operations return `Result<T, DmlError>`:
 
 | Operation                        | Return type              |
 |----------------------------------|--------------------------|
-| `Database.insert(sobj)`          | `Result<Id, DmlError>` — `Ok` holds the new record Id |
+| `Database.insert(sobj)`          | `Result<Id, DmlError>`, `Ok` holds the new record Id |
 | `Database.update(sobj)`          | `Result<Void, DmlError>` |
 | `Database.delete(sobj)`          | `Result<Void, DmlError>` |
 | `Database.undelete(sobj)`        | `Result<Void, DmlError>` |
-| `Database.upsert(sobj)`          | `Result<Id, DmlError>` — `Ok` holds the upserted record Id |
+| `Database.upsert(sobj)`          | `Result<Id, DmlError>`, `Ok` holds the upserted record Id |
 | `Database.insertAll(sobjs)`      | `List<Result<Id, DmlError>>` |
 | `Database.updateAll(sobjs)`      | `List<Result<Void, DmlError>>` |
 | `Database.deleteAll(sobjs)`      | `List<Result<Void, DmlError>>` |
@@ -88,21 +88,21 @@ In JIT mode, DML operations are simulated: `Database.insert` and `Database.upser
 return stub `Id` values with incrementing counters; all operations print a notice to
 stderr.
 
-## `Id` — Salesforce record identifier
+## `Id`: Salesforce record identifier
 
 `Id` is a primitive type representing a Salesforce record Id. It is distinct from
-`String` — there is no implicit coercion in either direction.
+`String`. There is no implicit coercion in either direction.
 
 `Id` values are produced by:
 - `Database.insert` / `Database.upsert` results (`Ok(id)`)
-- `Id.from(string)` — user-supplied construction
+- `Id.from(string)`. User-supplied construction
 - SOQL query results
 
 ### Static factory
 
 | Call                    | Returns       | Description |
 |-------------------------|---------------|-------------|
-| `Id.from(s: String)`    | `Option<Id>`  | Constructs an `Id` from a string. Always returns `Some` — Apex validates the format at assignment/DML time. |
+| `Id.from(s: String)`    | `Option<Id>`  | Constructs an `Id` from a string. Always returns `Some`, Apex validates the format at assignment/DML time. |
 
 Use `let assert` when the string is a known-good literal:
 
@@ -114,8 +114,8 @@ Use `match` when handling the `None` path is meaningful (e.g. user input):
 
 ```vertex
 match Id.from(raw_string) {
-  Some(id) => // use id,
-  None => // handle invalid,
+    Some(id) => useId(id),
+    None     => handleInvalid(),
 }
 ```
 

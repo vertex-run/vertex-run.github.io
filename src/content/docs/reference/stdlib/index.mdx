@@ -1,0 +1,86 @@
+---
+title: Standard Library
+description: Overview of the Vertex standard library and which types to use when.
+sidebar:
+  order: 1
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+The Vertex standard library is small on purpose. Most of its surface
+area is built around the core types you already meet in the
+[Language Tour](/tour/01-hello-world/): primitives, `Option`, `Result`,
+and collections. This section documents the supporting types that are
+also available globally.
+
+## By domain
+
+### Numbers
+
+Built-in numeric primitives (`Int`, `Long`, `Double`, `Decimal`) each
+carry a small set of methods on their instance (conversion,
+arithmetic helpers, parsing from `String`). See
+[Numeric methods](/reference/stdlib/numeric/).
+
+| Use              | Type        |
+|------------------|-------------|
+| Whole numbers, 32-bit range         | `Int`     |
+| Whole numbers, 64-bit range         | `Long`    |
+| Fractional, IEEE-754                | `Double`  |
+| Fractional, precise (money)         | `Decimal` |
+
+### Strings
+
+`String` values carry the usual assortment of query and transform
+methods (`length`, `toUpperCase`, `contains`, `split`, `trim`, …). See
+[String methods](/reference/stdlib/string/).
+
+### Dates and times
+
+There are three date-related types, each with a different job:
+
+| Use                                         | Type          |
+|---------------------------------------------|---------------|
+| A calendar date (no time-of-day)            | `Date`        |
+| A specific moment, including time-of-day    | `DateTime`    |
+| Formatting a `Date` or `DateTime` to a `String` | `DateFormat` |
+
+See [Date](/reference/stdlib/date/),
+[DateTime](/reference/stdlib/datetime/), and
+[DateFormat](/reference/stdlib/date-format/).
+
+### Collections
+
+Full documentation for `List<T>`, `Map<K, V>`, and `Set<T>` lives in
+the main reference under
+[Collections](/reference/collections/). They are not repeated here.
+
+### Error handling
+
+`Option<T>` and `Result<T, E>` are the core types for absence and
+failure. See [Option](/reference/option/) and
+[Result](/reference/result/).
+
+## Conventions across the stdlib
+
+- **Methods are camelCase.** `toUpperCase`, `unwrapOr`,
+  `filterMapSome`.
+- **Methods that might not produce a value return `Option`.**
+  `List.first()`, `List.get(i)`, `Map.get(k)`, `String.indexOf(...)`.
+- **Methods that might fail return `Result`.** Parsing,
+  construction with validation.
+- **Pure by default.** Collection methods return new values; they do
+  not mutate the receiver. The `mutable` keyword is reserved for
+  reassignment, not for hidden in-place mutation.
+- **No overloading.** One name, one signature. If you see a second
+  form, it is a different method with a different name.
+
+## What is not in the stdlib
+
+- **No I/O beyond `debug`.** Reading files, network calls, and
+  environment variables are Apex-runtime concerns; use `extern`
+  declarations to call the appropriate Apex APIs.
+- **No threading primitives.** Apex's execution model is synchronous
+  within a transaction; Vertex reflects that.
+- **No random.** If you need randomness, go through
+  `System.Crypto` or similar via [Apex FFI](/reference/salesforce/apex-ffi/).

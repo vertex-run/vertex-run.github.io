@@ -1,0 +1,127 @@
+---
+title: Project structure
+description: How Vertex locates source files, and how modules map to files.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+A "Vertex project" is any directory that contains an
+`sfdx-project.json` file. Vertex reuses the standard Salesforce project
+layout so the output of `vertex build` can be deployed with the `sf`
+CLI without extra config.
+
+## The minimum
+
+```
+my-project/
+├── sfdx-project.json
+└── src/
+    └── hello.vtx
+```
+
+`sfdx-project.json` is the project marker. `src/` (the default) holds
+your Vertex source. You can choose a different source directory with
+`--src`.
+
+`sfdx-project.json`:
+
+```json
+{
+  "packageDirectories": [
+    { "path": "force-app", "default": true }
+  ],
+  "sourceApiVersion": "66.0"
+}
+```
+
+## After `vertex build`
+
+```
+my-project/
+├── sfdx-project.json
+├── src/
+│   └── hello.vtx
+└── force-app/
+    └── main/
+        └── default/
+            └── classes/
+                ├── Hello.cls
+                └── Hello.cls-meta.xml
+```
+
+Each `.vtx` file produces one Apex class. The class name is the file
+name capitalized (`hello.vtx` becomes `Hello.cls`).
+
+## Modules and imports
+
+Each `.vtx` file is a module. The module name is the file path
+relative to `src/`, without the extension, using `/` as the separator.
+
+```
+src/billing/invoice.vtx    # module: billing/invoice
+src/shared/utils.vtx       # module: shared/utils
+```
+
+Import another module by its module path:
+
+```vertex
+import billing.invoice
+import shared.utils
+
+let i = invoice.total(...)
+```
+
+See [Modules & Imports](/reference/imports/) for the full rules
+(public/private visibility, cyclic-import detection, re-export rules).
+
+## Test files
+
+Files ending in `_test.vtx` are test modules. They may import
+non-test modules, but non-test modules may not import them.
+
+```
+src/
+├── invoice.vtx
+└── invoice_test.vtx    # @Test functions live here
+```
+
+Run them with `vertex test` (see [The vertex CLI](/tooling/cli/)).
+
+## Anon scripts directory (convention)
+
+For real-project style examples, a common convention is to keep an
+`anon-scripts/` folder with one `.apex` file per public entry point:
+
+```
+my-project/
+├── src/
+│   └── hello.vtx        # pub fn run()
+└── anon-scripts/
+    └── hello.apex       # Hello.vtx_run();
+```
+
+Then:
+
+```
+$ sf apex run --target-org <alias> --file anon-scripts/hello.apex
+```
+
+This is not enforced; it is just a tidy way to invoke your entry points
+against the org.
+
+<Aside type="note">
+`pub fn run(): Void` is the entry-point convention for Apex-class
+builds. The compiler generates `public static void vtx_run()` on the
+Apex class, and the `vtx_` prefix avoids Apex's ban on identifiers
+starting with an underscore.
+</Aside>
+
+## Where generated classes go
+
+`vertex build` writes to `force-app/main/default/classes/`. This is
+the directory `sf project deploy start` picks up by default.
+
+If your `sfdx-project.json` specifies a different default package
+directory, the output still lands inside it under `main/default/classes/`.

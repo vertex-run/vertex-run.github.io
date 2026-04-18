@@ -24,7 +24,7 @@ fn validate(a: Account): Bool { ... }                  // private
 
 ## Import forms
 
-**Bare import** — access symbols via a qualifier:
+**Bare import**. Access symbols via a qualifier:
 
 ```vertex
 import accounts
@@ -40,7 +40,7 @@ import billing.invoices
 let inv = invoices.create()
 ```
 
-**Aliased import** — choose your own qualifier:
+**Aliased import**. Choose your own qualifier:
 
 ```vertex
 import billing.invoices as inv
@@ -48,7 +48,7 @@ import billing.invoices as inv
 let i = inv.create()
 ```
 
-**Selective import** — bring specific symbols directly into scope:
+**Selective import**. Bring specific symbols directly into scope:
 
 ```vertex
 import accounts.{ findById, Account }
@@ -89,13 +89,13 @@ vertex run scripts/hello.vtx
 Only the transitively reachable modules are loaded. Files in `src/` that are
 not imported are never touched.
 
-A file with no imports runs anywhere — no project required.
+A file with no imports runs anywhere. No project required.
 
 See the [Imports reference](/reference/imports/#vertex-run-and-imports) for the
 full discovery rules and `--sf` preconditions.
 
 ## Next steps
 
-- [Imports reference](/reference/imports/) — full spec including opaque type error codes
-- [Constants reference](/reference/basics/constants/) — `pub const` for exported values
-- [Annotations](/reference/annotations/) — controlling Apex sharing modifiers per module
+- [Imports reference](/reference/imports/): full spec including opaque type error codes
+- [Constants reference](/reference/bindings/#constants), `pub const` for exported values
+- [Annotations](/reference/annotations/): controlling Apex sharing modifiers per module

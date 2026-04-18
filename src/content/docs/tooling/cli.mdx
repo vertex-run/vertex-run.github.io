@@ -1,0 +1,174 @@
+---
+title: The vertex CLI
+description: Command reference for vertex run, vertex test, vertex build, and vertex lsp.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The `vertex` binary is the entire toolchain: runner, test runner,
+compiler, and language server. This page is the command reference.
+
+## Overview
+
+```
+vertex <command> [options]
+```
+
+| Command | Purpose                                                   |
+|---------|-----------------------------------------------------------|
+| `run`   | Run a `.vtx` file via JIT or on a Salesforce org          |
+| `test`  | Run `@Test` functions in `*_test.vtx` files               |
+| `build` | Compile `.vtx` files in the project to Apex class files   |
+| `lsp`   | Start the Language Server on stdio                        |
+
+Flags:
+
+| Flag                | Effect                          |
+|---------------------|---------------------------------|
+| `--help`, `-h`      | Show help                       |
+| `--version`, `-v`   | Show version                    |
+
+## `vertex run`
+
+```
+vertex run [options] <file>
+```
+
+Runs a `.vtx` file. Default mode is JIT (local execution); add `--sf`
+to run on a Salesforce org instead.
+
+| Flag               | Effect                                                                 |
+|--------------------|------------------------------------------------------------------------|
+| *(none)*           | JIT mode. Execute locally, print `debug` output to stdout.             |
+| `--sf`             | Salesforce mode. Generate Anonymous Apex and execute on the org.       |
+| `--org <alias>`    | Salesforce org alias. Requires `--sf`.                                 |
+| `--compare`        | Run both JIT and Salesforce and diff output line-for-line. `--sf` required. |
+| `--dump-apex`      | Print the generated Anonymous Apex to stdout and exit.                 |
+| `--help`, `-h`     | Show help for this command.                                            |
+
+**Standalone files.** A file with no imports runs anywhere, no project
+required:
+
+```
+$ vertex run hello.vtx
+hello, vertex!
+```
+
+**Files that import other modules.** When a file has `import`
+statements, Vertex looks up to find an `sfdx-project.json` and uses the
+project's `src/` directory as the module root:
+
+```
+my-project/
+├── sfdx-project.json
+└── src/
+    ├── greet.vtx
+    └── main.vtx      # import greet
+```
+
+Then:
+
+```
+$ vertex run src/main.vtx
+```
+
+See [Project structure](/tooling/project-structure/) for the full layout rules.
+
+**`--compare` in practice.** This is a development aid: it runs your
+file once via the JIT, once on the org, and diffs the two outputs. It
+exits 0 only when the output matches line-for-line.
+
+```
+$ vertex run --sf --org scratch --compare examples/hello.vtx
+outputs match (1 line(s))
+```
+
+<Aside type="note">
+`--compare` is a sanity check for codegen, not a normal dev tool. Most
+of the time `vertex run <file>` (JIT) is all you need.
+</Aside>
+
+## `vertex test`
+
+```
+vertex test [options] [<file>]
+```
+
+Runs `@Test` functions. With no file argument, discovers every
+`*_test.vtx` file in the project's `src/` and runs them all.
+
+| Flag                  | Effect                                              |
+|-----------------------|-----------------------------------------------------|
+| `--filter <name>`     | Only run tests whose name contains `<name>`.        |
+| `--src <dir>`         | Source directory to search (default: `src`).        |
+| `--no-color`          | Disable ANSI color in output.                       |
+| `--help`, `-h`        | Show help for this command.                         |
+
+**Rules:**
+
+- Test files must end in `_test.vtx`.
+- Test functions are marked `@Test` and take no parameters.
+- Exit code is 0 when all tests pass, 1 when any test fails. Zero
+  discovered tests is still a pass.
+
+```
+$ vertex test src/billing/invoice_test.vtx
+✓ invoice totals include tax
+✓ zero-line invoice is rejected
+2 passed, 0 failed  (47ms)
+```
+
+```
+$ vertex test --filter invoice
+```
+
+See [Testing](/reference/testing/) for the full guide.
+
+## `vertex build`
+
+```
+vertex build [options]
+```
+
+Compiles every `.vtx` file in the project's source directory to Apex
+class files. Writes the `.cls` + `.cls-meta.xml` pair for each file to
+`force-app/main/default/classes/`.
+
+| Flag            | Effect                                     |
+|-----------------|--------------------------------------------|
+| `--src <dir>`   | Source directory (default: `src`).         |
+| `--help`, `-h`  | Show help for this command.                |
+
+Run from the project root:
+
+```
+$ vertex build
+Success! Built 3 class(es) to force-app/main/default/classes/
+```
+
+Then deploy with:
+
+```
+$ sf project deploy start --target-org <alias>
+```
+
+## `vertex lsp`
+
+```
+vertex lsp
+```
+
+Starts the Language Server on stdin/stdout. This is what your editor
+invokes when you open a `.vtx` file. You do not usually run it
+directly. See [Editor integration](/tooling/editor-integration/).
+
+## Exit codes
+
+All commands follow the standard convention:
+
+| Code | Meaning                              |
+|------|--------------------------------------|
+| 0    | Success.                             |
+| 1    | Failure (compile error, test failure, DML error, etc.). |

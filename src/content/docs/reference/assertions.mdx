@@ -13,8 +13,8 @@ panics immediately with a descriptive failure message.
 
 ```vertex
 let x = 42
-assert x > 0          // passes — silent
-assert x == 42        // passes — silent
+assert x > 0          // passes. Silent
+assert x == 42        // passes. Silent
 ```
 
 ## Syntax
@@ -29,7 +29,7 @@ compile time (error `E100`).
 ```vertex
 assert true           // ok
 assert 1 == 1         // ok
-assert "hello"        // E100: type mismatch — expected Bool, found String
+assert "hello"        // E100: type mismatch. Expected Bool, found String
 ```
 
 ## Failure messages
@@ -72,7 +72,7 @@ Both cause a panic on failure and are appropriate during development and in test
 ## Apex codegen
 
 `assert expr` compiles to `System.Assert.isTrue(expr, 'assertion failed at …')`.
-The message is a compile-time string — no runtime decomposition occurs on the
+The message is a compile-time string. No runtime decomposition occurs on the
 Apex side. Assertions are **never stripped** from emitted Apex; there is no
 release-build mode that removes them.
 

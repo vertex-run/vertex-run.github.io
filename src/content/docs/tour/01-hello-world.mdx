@@ -12,14 +12,14 @@ import { Aside } from '@astrojs/starlight/components';
 Vertex programs are run locally with:
 
 ```
-dart run bin/vertex.dart run <file.vtx>
+vertex run <file.vtx>
 ```
 
 There is no `main` function. Vertex programs execute top-level statements in order, top to bottom.
 
 ## Your first output
 
-`debug` is the only way to produce observable output in Vertex. It is an **expression** — it evaluates its argument, prints it, and returns the value.
+`debug` is the only way to produce observable output in Vertex. It is an **expression**. It evaluates its argument, prints it, and returns the value.
 
 ```vertex
 debug "hello, world!"
@@ -34,7 +34,7 @@ hello, world!
 true
 ```
 
-You can use `debug` anywhere an expression is valid — in the middle of a calculation, inside a `match` arm, as a function argument.
+You can use `debug` anywhere an expression is valid. In the middle of a calculation, inside a `match` arm, as a function argument.
 
 <Aside type="caution">
 `debug` is a development tool. The compiler emits warning `W001` whenever it appears in source code. Remove `debug` calls before shipping to production.
@@ -68,6 +68,6 @@ Trying to reassign an immutable `let` binding is a compile-time error.
 
 ## Next steps
 
-- [Primitive Types](/reference/basics/primitive-types/) — the built-in types available in Vertex
-- [Bindings](/reference/basics/bindings/) — full binding reference
-- [Output](/reference/basics/output/) — `debug` in depth
+- [Primitive Types](/reference/primitive-types/): the built-in types available in Vertex
+- [Bindings](/reference/bindings/): full binding reference
+- [Output](/reference/output/), `debug` in depth

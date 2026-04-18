@@ -1,16 +1,16 @@
 ---
-title: Apex FFI — Extern Declarations
+title: Apex FFI, Extern Declarations
 description: Referencing existing Apex types, methods, and fields from Vertex code.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
 Vertex can reference existing Apex types through `extern` declarations.
-Extern declarations are **compile-time metadata only** — they tell the type
+Extern declarations are **compile-time metadata only**. They tell the type
 checker that a foreign type exists, and the codegen emits references to it
 verbatim. No Apex class is generated for an extern declaration.
 
-## `extern type` — Opaque Apex class
+## `extern type`: Opaque Apex class
 
 ```vertex
 extern type Messaging.SingleEmailMessage
@@ -40,7 +40,7 @@ private static List<Messaging.SingleEmailMessage> wrapAll(Messaging.SingleEmailM
 }
 ```
 
-## `extern fn` — Apex static method
+## `extern fn`: Apex static method
 
 ```vertex
 extern fn Limits.getCpuTime(): Int
@@ -82,11 +82,11 @@ extern fn Messaging.sendEmailChecked(
 ```
 
 <Aside type="caution">
-Extern fns are not callable in JIT (`vertex run`) mode — they require the
+Extern fns are not callable in JIT (`vertex run`) mode. They require the
 Salesforce runtime. Calling an extern fn in JIT mode produces a runtime error.
 </Aside>
 
-## `extern new` — Apex constructor
+## `extern new`: Apex constructor
 
 ```vertex
 extern type Messaging.SingleEmailMessage
@@ -125,7 +125,7 @@ new Messaging.SingleEmailMessage()
 new Messaging.SingleEmailMessage('Hello')
 ```
 
-## `extern method` — Apex instance method
+## `extern method`: Apex instance method
 
 ```vertex
 extern method Messaging.SingleEmailMessage.setSubject(
@@ -150,7 +150,7 @@ extern method Messaging.InboundEmail.getFrom(
 ): String = "getFromAddress"
 ```
 
-## `extern field` — Read-only Apex field
+## `extern field`: Read-only Apex field
 
 ```vertex
 extern field Messaging.InboundEmail.subject: String
@@ -159,7 +159,7 @@ extern field Messaging.InboundEmail.subject: String
 Vertex code can read the field via dot access; writes are rejected by the
 checker (error `E120`).
 
-## `extern var` — Read-write Apex field
+## `extern var`: Read-write Apex field
 
 ```vertex
 extern var Messaging.SingleEmailMessage.optOutPolicy: String
@@ -169,15 +169,15 @@ Reads are always allowed. Writes require the receiver to be declared
 `mutable let`; writing through an immutable binding is error `E119`.
 
 ```vertex
-fn configurePolicy(mutable let msg: Messaging.SingleEmailMessage): Void {
-    msg.optOutPolicy = "SEND_OPT_OUT"   // ok — receiver is mutable
-    Void
+fn configurePolicy(msg: Messaging.SingleEmailMessage): Void {
+    mutable let m = msg
+    m.optOutPolicy = "SEND_OPT_OUT"   // ok. Local binding is mutable
 }
 ```
 
 Field assignment syntax: `receiver.field = value` emits `receiver.field = value;` verbatim in Apex.
 
-## `extern enum` — Apex enum type
+## `extern enum`: Apex enum type
 
 ```vertex
 extern enum Schema.DisplayType { Address, Currency, Phone, Picklist, Reference }
@@ -220,7 +220,7 @@ Extern enum variants can be constructed and matched in JIT mode without a Salesf
 
 ## FFI safety rules
 
-### `Option<T>` return — null-check wrapper
+### `Option<T>` return: null-check wrapper
 
 When an extern declaration returns `Option<T>`, the codegen wraps every call site with a null check:
 
@@ -241,7 +241,7 @@ The programmer is responsible for knowing whether the Apex API can return
 `null`. If declared non-`Option` and the Apex side returns `null`, a
 `NullPointerException` propagates in Apex.
 
-### `Result<T, ApexException>` return — try/catch wrapper
+### `Result<T, ApexException>` return: try/catch wrapper
 
 When an extern declaration returns `Result<T, ApexException>`, the codegen
 wraps every call site with a `try`/`catch`.
@@ -271,8 +271,9 @@ The generated Apex class is named `VtxApexError` rather than `ApexException` bec
 
 ## Calling Apex APIs that use `Object`
 
-Some Apex APIs — `Database.queryWithBindings`, `JSON.deserializeUntyped`,
-parts of `Schema.describe*` — take or return Apex's universal `Object`
-type. See [`Apex.Object`](/reference/apex-object/) for the interop escape
-hatch that makes those APIs reachable without breaking Vertex's nominal
-type system.
+Some Apex APIs, such as `Database.queryWithBindings`,
+`JSON.deserializeUntyped`, and parts of `Schema.describe*`, take or
+return Apex's universal `Object` type. See
+[`Apex.Object`](/reference/salesforce/apex-object/) for the interop
+escape hatch that makes those APIs reachable without breaking Vertex's
+nominal type system.

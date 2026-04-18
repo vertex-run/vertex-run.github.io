@@ -28,9 +28,9 @@ type Shape {
 ## Constructing variants
 
 ```vertex
-let dir = North                        // unit variant — no parentheses
+let dir = North                        // unit variant. No parentheses
 let c   = Circle(radius: 5.0)         // named fields
-let c2  = Circle(5.0)                 // positional — same as above
+let c2  = Circle(5.0)                 // positional. Same as above
 ```
 
 Unit variants are referenced by name alone. `North()` is a compile error.
@@ -60,7 +60,7 @@ When the binding name matches the field name, use `field:` instead of `field: fi
 // Long form
 match s { Circle(radius: radius) => radius * 2.0 }
 
-// Shorthand — equivalent
+// Shorthand. Equivalent
 match s { Circle(radius:) => radius * 2.0 }
 ```
 
@@ -99,7 +99,7 @@ When the compiler knows the exact variant statically, you can access fields dire
 
 ```vertex
 let c = Circle(radius: 5.0)
-debug c.radius   // 5.0 — no match needed; static type is Circle
+debug c.radius   // 5.0. No match needed; static type is Circle
 ```
 
 When every variant shares a field with the same name and type, you can access it on the parent type too:
@@ -111,11 +111,11 @@ type Ticket {
 }
 
 fn getAvailable(t: Ticket): Int {
-    t.available   // valid — both variants have 'available: Int'
+    t.available   // valid. Both variants have 'available: Int'
 }
 ```
 
-## `let assert` — unsafe extraction
+## `let assert`: unsafe extraction
 
 <Aside type="caution">
 Panics at runtime if the pattern doesn't match. Use only when you know the variant is guaranteed.
@@ -130,5 +130,5 @@ Prefer `if let` for conditional extraction or `match` for exhaustive dispatch.
 ## Next steps
 
 - [Sum Types reference](/reference/sum-types/)
-- [Pattern Matching reference](/reference/pattern-matching/) — list patterns, OR-patterns, `let assert`
-- [Option\<T\>](/reference/option/) and [Result\<T, E\>](/reference/result/) — the built-in sum types
+- [Pattern Matching reference](/reference/pattern-matching/): list patterns, OR-patterns, `let assert`
+- [Option\<T\>](/reference/option/) and [Result\<T, E\>](/reference/result/). The built-in sum types

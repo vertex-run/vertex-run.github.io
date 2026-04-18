@@ -1,15 +1,37 @@
 ---
-title: Current Limitations
-description: Known limitations and partially-implemented constructs in the current Vertex version.
+title: Current limitations
+description: Constructs that are partially implemented or not yet available.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
 <Aside type="caution">
-These are constructs that are **parsed but not yet executable**, or not yet
-implemented at all. This page reflects the current implementation state.
+This page lists constructs that are **parsed but not yet executable**,
+or **not yet implemented at all**. It reflects the current state of
+the language. Anything not listed here is expected to work.
 </Aside>
 
-| Limitation                                     | Notes                                    |
-|------------------------------------------------|------------------------------------------|
-| Record update syntax `...record`               | Parsed; runtime throws                   |
+| Limitation                                     | Why                                                               | Workaround                                                                                  |
+|------------------------------------------------|-------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
+| Record update syntax `...record`               | Parser accepts it; runtime throws.                                 | Construct a new record explicitly with the fields you want to change.                       |
+| `extern` calls in JIT mode                     | JIT has no Salesforce runtime.                                     | Run these code paths with `vertex run --sf --org <alias>` or from a deployed Apex test.      |
+| SOQL in Vertex source                          | SOQL is not yet part of the language.                              | Wrap the specific queries you need with `extern fn` around `Database.query` / `queryWithBindings`. |
+| `while` and `do`/`while` statements            | Intentional: iteration is `for..in`, recursion, or combinators.   | Use `for..in`, `List.fold`, or recursion.                                                    |
+| Mutating methods on collections                | All collection operations are pure.                                | Rebind: `let xs = xs.add(item)`.                                                             |
+| `null` in user code                            | Intentional: absence is `Option<T>`.                               | Use `Option<T>` with `Some` / `None`.                                                        |
+| `throw` / `try` / `catch` in user code         | Intentional: failure is `Result<T, E>`.                            | Return `Result<T, E>` and propagate with `?`.                                                |
+| Class inheritance                              | Intentional: composition over inheritance.                         | Model shared behaviour with interfaces; share implementation via module-level functions.    |
+| Static methods on types                        | Intentional: module-level `fn` only.                               | Put "static" helpers at module level; readers see them as regular functions.                |
+| Parameterised tests                            | Not yet supported.                                                 | Loop inside an `@Test` function over a list of cases.                                        |
+| Before/after hooks in tests                    | Not yet supported.                                                 | Factor shared setup into a helper function called at the top of each test.                  |
+| Formatter                                      | Not yet available.                                                 | Follow the examples in the [tour](/tour/01-hello-world/) for idiomatic style.                |
+| Raw string literals                            | Not yet supported.                                                 | Use explicit escape sequences.                                                               |
+| VS Code / JetBrains extensions                 | Not yet available.                                                 | Any LSP-capable editor can drive `vertex lsp`. Zed has a purpose-built extension.           |
+
+## When a limitation bites
+
+If you hit a limitation in a real project, file an issue at
+[vertex-run/vertex](https://github.com/vertex-run/vertex/issues) with a
+minimal reproducing example. The list above is curated; a "thing I
+tried and it didn't work" that is not listed is almost always a bug
+worth reporting.

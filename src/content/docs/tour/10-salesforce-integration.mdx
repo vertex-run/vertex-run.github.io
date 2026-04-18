@@ -7,7 +7,7 @@ sidebar:
 
 import { Aside } from '@astrojs/starlight/components';
 
-## `@SObject` — Salesforce Object types
+## `@SObject`: Salesforce Object types
 
 Mark a single-variant `type` with `@SObject` to treat it as a Salesforce SObject:
 
@@ -51,10 +51,10 @@ match result {
 | `Database.undelete(sobj)` | `Void`       |
 
 <Aside type="note">
-In JIT mode, DML operations are simulated — `insert` returns a stub `Id` and all operations print a notice to stderr. No Salesforce connection is needed for local development.
+In JIT mode, DML operations are simulated, `insert` returns a stub `Id` and all operations print a notice to stderr. No Salesforce connection is needed for local development.
 </Aside>
 
-## `@AuraEnabled` — Lightning components
+## `@AuraEnabled`: Lightning components
 
 Mark a function as callable from LWC with `@AuraEnabled`. It must return `Result<T, AuraError>`:
 
@@ -99,7 +99,7 @@ msg.setSubject("Hello from Vertex")
 ```
 
 <Aside type="caution">
-`extern` declarations are not callable in JIT mode — they require the Salesforce runtime. Calling an extern fn locally produces a runtime error.
+`extern` declarations are not callable in JIT mode. They require the Salesforce runtime. Calling an extern fn locally produces a runtime error.
 </Aside>
 
 ## Sharing modifiers
@@ -109,15 +109,15 @@ Control the Apex sharing modifier at the top of any `.vtx` file:
 ```vertex
 @WithoutSharing   // or @WithSharing, @InheritedSharing
 
-import lang/db
+import lang.db
 
 pub fn run(): Void { ... }
 ```
 
-The default is `with sharing` — the safe Salesforce security default.
+The default is `with sharing`. The safe Salesforce security default.
 
 ## Next steps
 
-- [Salesforce Integration reference](/reference/salesforce-integration/) — `@SObject`, `Database.*`, `Id` type
-- [Apex FFI reference](/reference/apex-ffi/) — `extern type`, `extern fn`, `extern method`, `extern field`, `extern enum`
-- [Annotations reference](/reference/annotations/) — `@AuraEnabled`, sharing modifiers
+- [Salesforce Integration reference](/reference/salesforce/integration/): `@SObject`, `Database.*`, `Id` type
+- [Apex FFI reference](/reference/salesforce/apex-ffi/): `extern type`, `extern fn`, `extern method`, `extern field`, `extern enum`
+- [Annotations reference](/reference/annotations/), `@AuraEnabled`, sharing modifiers

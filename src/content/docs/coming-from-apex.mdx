@@ -1,0 +1,352 @@
+---
+title: Coming from Apex
+description: A side-by-side cheatsheet for Apex developers learning Vertex.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+If you already know Apex, you already know most of what Vertex looks
+like: braces, named arguments, `@Annotations`, `public`, and so on.
+This page is a quick translation table for the constructs that differ.
+For the full walkthrough, start with the
+[Language Tour](/tour/01-hello-world/).
+
+<Aside type="tip">
+Nothing on this page is Apex-in-disguise. Every Vertex example is real
+syntax that you can paste into a `.vtx` file and run with `vertex run`.
+</Aside>
+
+## Primitive types
+
+| Apex      | Vertex   |
+|-----------|----------|
+| `Integer` | `Int`    |
+| `Long`    | `Long`   |
+| `Double`  | `Double` |
+| `Decimal` | `Decimal`|
+| `String`  | `String` |
+| `Boolean` | `Bool`   |
+| `Id`      | `Id`     |
+| `void`    | `Void`   |
+
+## Bindings and constants
+
+| Apex                                          | Vertex                  |
+|-----------------------------------------------|-------------------------|
+| `String name = 'Alice';`                      | `let name = "Alice"`    |
+| `Integer x = 1; x = 2;` *(mutable)*           | `mutable let x = 1; x = 2` |
+| `public static final String ENV = 'prod';`    | `const ENV = "prod"` (module level) |
+| `// unused` variable warning                  | prefix with `_`: `let _tmp = ...` |
+
+Vertex bindings are immutable by default. Add `mutable` when you really
+need reassignment, so mutation is always visible in the source.
+
+## Strings
+
+| Apex                                  | Vertex                       |
+|---------------------------------------|------------------------------|
+| `'Hello, ' + name + '!'`              | `"Hello, ${name}!"`          |
+| `String.valueOf(x)`                   | `"${x}"` *(interpolation coerces)* |
+| `s.toUpperCase()`                     | `s.toUpperCase()`            |
+| `s.contains('foo')`                   | `s.contains("foo")`          |
+
+Strings are always double-quoted. Single quotes are not string literals.
+
+## Control flow
+
+Apex:
+```apex
+String label;
+if (age < 18)       label = 'minor';
+else if (age < 65)  label = 'adult';
+else                label = 'senior';
+```
+
+Vertex (blocks are expressions, so `if` returns a value):
+```vertex
+let label =
+    if age < 18      { "minor" }
+    else if age < 65 { "adult" }
+    else             { "senior" }
+```
+
+There is no ternary operator. An `if` expression is the ternary.
+
+## Loops
+
+Apex uses C-style `for`. Vertex uses `for..in`.
+
+```apex
+for (Integer i : numbers) {
+    System.debug(i);
+}
+```
+
+```vertex
+for n in numbers {
+    debug n
+}
+```
+
+There is no `while` in user code; idiomatic Vertex expresses iteration
+with `for..in`, recursion, or collection combinators
+(`map`, `filter`, `fold`).
+
+## Collections
+
+Apex:
+```apex
+List<String> names = new List<String>{ 'Alice', 'Bob' };
+Set<Integer> ids   = new Set<Integer>{ 1, 2, 3 };
+Map<String, Integer> ages = new Map<String, Integer>{
+    'Alice' => 30, 'Bob' => 25
+};
+```
+
+Vertex:
+```vertex
+let names: List<String> = ["Alice", "Bob"]
+let ids: Set<Int> = #{1, 2, 3}
+let ages: Map<String, Int> = {"Alice": 30, "Bob": 25}
+```
+
+Vertex collections come with the combinators you expect
+(`map`, `filter`, `fold`, `any`, `all`), so a lot of explicit
+for-loops go away. See [Collections](/reference/collections/).
+
+## Absence: no null
+
+Apex uses `null` for absence. Vertex has no `null`: use `Option<T>`.
+
+```apex
+String name = lookup(id);
+if (name != null) {
+    System.debug('Found: ' + name);
+} else {
+    System.debug('Missing');
+}
+```
+
+```vertex
+match lookup(id) {
+    Some(name) => debug "Found: ${name}",
+    None       => debug "Missing",
+}
+```
+
+Shorthand: `.unwrapOr(default)`, `.map(...)`, `.flatMap(...)`. See
+[Option](/reference/option/).
+
+## Failure: no exceptions
+
+Apex uses `throw` / `try` / `catch`. Vertex uses `Result<T, E>`.
+
+```apex
+public static Integer safeDivide(Integer a, Integer b) {
+    if (b == 0) {
+        throw new IllegalArgumentException('cannot divide by zero');
+    }
+    return a / b;
+}
+```
+
+```vertex
+fn safe_divide(a: Int, b: Int): Result<Int, String> {
+    if b == 0 {
+        Error("cannot divide by zero")
+    } else {
+        Ok(a / b)
+    }
+}
+```
+
+Propagate with the `?` operator:
+
+```vertex
+fn halve_then_double(a: Int, b: Int): Result<Int, String> {
+    let q = safe_divide(a, b)?    // returns early on Error
+    Ok(q * 2)
+}
+```
+
+See [Result](/reference/result/).
+
+## Functions vs classes and statics
+
+Apex lives inside classes. Vertex does not have static methods: a
+`.vtx` file *is* a module, and its `pub fn` declarations are its API.
+
+```apex
+// Apex
+public class MathUtils {
+    public static Integer add(Integer a, Integer b) { return a + b; }
+}
+
+Integer sum = MathUtils.add(1, 2);
+```
+
+```vertex
+// math_utils.vtx
+pub fn add(a: Int, b: Int): Int { a + b }
+```
+
+```vertex
+// in another file
+import math_utils
+
+let sum = math_utils.add(1, 2)
+```
+
+See [Functions](/reference/functions/) and
+[Modules & Imports](/reference/imports/).
+
+## Records and sum types
+
+Apex has classes (with fields, getters/setters, constructors) and
+enums. Vertex has `type`, which covers both.
+
+```apex
+public class Account {
+    public String name;
+    public Decimal revenue;
+    public Account(String name, Decimal revenue) {
+        this.name = name; this.revenue = revenue;
+    }
+}
+```
+
+```vertex
+type Account {
+    Account(name: String, revenue: Decimal)
+}
+
+let a = Account(name: "ACME", revenue: 1000000.0d)
+debug a.name
+```
+
+Multi-variant types (sum types) have no Apex equivalent; the closest
+thing is an `enum`, but sum types carry data per variant:
+
+```vertex
+type Payment {
+    Card(last4: String),
+    Bank(routing: String, account: String),
+    Cash,
+}
+```
+
+See [Sum Types](/reference/sum-types/) and
+[Pattern Matching](/reference/pattern-matching/).
+
+## SObjects and DML
+
+```apex
+Account a = new Account(Name = 'ACME');
+insert a;
+```
+
+```vertex
+@SObject
+type Account {
+    Account(Name: String)
+}
+
+let acc = Account(Name: "ACME")
+let result = Database.insert(acc)   // Result<Id, DmlError>
+```
+
+Apex's "throws on failure" becomes an explicit `Result` you must match
+on. `Database.insert`, `update`, `delete`, and `undelete` all return
+`Result`. See [Salesforce Integration](/reference/salesforce/integration/).
+
+## `@AuraEnabled`
+
+```apex
+@AuraEnabled(cacheable=true)
+public static String getAccountName(Id id) { ... }
+```
+
+```vertex
+@AuraEnabled(cacheable: true)
+fn getAccountName(id: String): Result<String, AuraError> { ... }
+```
+
+The function must return `Result<T, AuraError>`. `Ok` is returned to
+the LWC; `Error` is translated into an `AuraHandledException` at the
+Apex boundary. See [Annotations](/reference/annotations/).
+
+## Tests
+
+```apex
+@IsTest
+private class InvoiceTest {
+    @IsTest static void totals_include_tax() {
+        System.assertEquals(110, Invoice.total(100, 10));
+    }
+}
+```
+
+```vertex
+// invoice_test.vtx
+@Test
+fn totals_include_tax(): Void {
+    assert Invoice.total(100, 10) == 110
+}
+```
+
+Test files end in `_test.vtx`. Run them with
+`vertex test` (see [Testing](/reference/testing/)).
+
+## Sharing
+
+```apex
+public without sharing class AdminJob { ... }
+```
+
+```vertex
+@WithoutSharing
+
+pub fn run(): Void { ... }
+```
+
+The sharing annotation goes at the top of the file. Default is
+`@WithSharing`, which matches Apex security best practices.
+
+## Annotations reference
+
+| Apex                               | Vertex              |
+|------------------------------------|---------------------|
+| `@IsTest` *(method)*               | `@Test`             |
+| `@AuraEnabled`                     | `@AuraEnabled`      |
+| `@AuraEnabled(cacheable=true)`     | `@AuraEnabled(cacheable: true)` |
+| `with sharing`                     | `@WithSharing`      |
+| `without sharing`                  | `@WithoutSharing`   |
+| `inherited sharing`                | `@InheritedSharing` |
+
+## Calling existing Apex
+
+You do not have to rewrite anything. Vertex can call Apex through
+`extern` declarations:
+
+```vertex
+extern type Messaging.SingleEmailMessage
+extern new Messaging.SingleEmailMessage(): Messaging.SingleEmailMessage
+extern method Messaging.SingleEmailMessage.setSubject(
+    self: Messaging.SingleEmailMessage,
+    subject: String,
+): Void
+
+let msg = Messaging.SingleEmailMessage.new()
+msg.setSubject("Hello from Vertex")
+```
+
+See [Apex FFI](/reference/salesforce/apex-ffi/).
+
+## Next steps
+
+- [Getting Started](/getting-started/): install the toolchain and run
+  your first program.
+- [Language Tour](/tour/01-hello-world/): a guided walk through the
+  language from the top.
+- [Guides](/guides/): task-oriented how-tos (error handling, testing,
+  pattern matching).

@@ -14,7 +14,7 @@ fn add(a: Int, b: Int): Int {
 ```
 
 - The last expression in the body is the return value (no `return` needed).
-- All module-level functions are hoisted — you can call them before they're defined.
+- All module-level functions are hoisted. You can call them before they're defined.
 - Trailing commas are allowed in parameter lists and argument lists.
 
 ## Named arguments
@@ -27,7 +27,7 @@ fn greet(name: String, prefix: String): String {
 }
 
 debug greet(name: "Alice", prefix: "Hello")   // Hello, Alice!
-debug greet(prefix: "Hi", name: "Bob")        // Hi, Bob! — any order
+debug greet(prefix: "Hi", name: "Bob")        // Hi, Bob!. Any order
 debug greet("Carol", "Hey")                   // positional also works
 ```
 
@@ -44,14 +44,14 @@ debug greet(name: "Bob", prefix: "Hi") // Hi, Bob!
 
 ## Return type inference
 
-Private functions don't need an explicit return type — the compiler infers it from the body:
+Private functions don't need an explicit return type. The compiler infers it from the body:
 
 ```vertex
 fn double(n: Int) { n * 2 }    // inferred: Int
 fn noop() { }                   // inferred: Void
 ```
 
-**`pub fn` must always have an explicit return type** — module boundaries must be self-documenting.
+**`pub fn` must always have an explicit return type**. Module boundaries must be self-documenting.
 
 ## Closures
 
@@ -102,5 +102,5 @@ debug identity("hello")   // hello
 
 ## Next steps
 
-- [Functions reference](/reference/functions/) — closures, destructured parameters, function type aliases
-- [Control Flow](/reference/control-flow/) — using `return` for early exit
+- [Functions reference](/reference/functions/): closures, destructured parameters, function type aliases
+- [Control Flow](/reference/control-flow/): using `return` for early exit

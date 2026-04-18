@@ -59,7 +59,7 @@ let final: Int = r
 let opt: Option<Int> = r.toOption()
 ```
 
-### `?` operator — early error propagation
+### `?` operator: early error propagation
 
 Applied to a `Result<T, E>` expression inside a function that also returns
 `Result<_, E>`. If the value is `Error(e)`, propagates immediately; otherwise

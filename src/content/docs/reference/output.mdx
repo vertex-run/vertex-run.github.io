@@ -1,0 +1,84 @@
+---
+title: Output
+description: How to produce observable output from a Vertex program.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`debug` is the only way to produce observable output in Vertex. It is
+an **expression**: it evaluates its argument, prints it, and returns
+the value. It can appear anywhere an expression is valid.
+
+```vertex
+debug "hello world"
+debug 42
+debug factorial(10)
+```
+
+Because `debug` returns its argument, you can drop it into the middle
+of an expression to inspect an intermediate value without rearranging
+the code:
+
+```vertex
+let total = debug compute_base() + compute_tax()   // prints base, then adds tax
+```
+
+## Stringification
+
+`debug` converts its argument to a string before printing, following
+these rules:
+
+| Type           | Representation                                         |
+|----------------|--------------------------------------------------------|
+| `Int`, `Long`  | Decimal digits, no leading zeros; negatives with `-`   |
+| `Double`       | Shortest decimal form that round-trips                 |
+| `Decimal`      | Exact decimal form, scale preserved                    |
+| `Bool`         | `true` or `false`                                      |
+| `String`       | The raw characters, no surrounding quotes              |
+| `Option<T>`    | `Some(value)` or `None`                                |
+| `Result<T, E>` | `Ok(value)` or `Error(value)`                          |
+| `List<T>`      | `[elem1, elem2, ...]`                                  |
+| `Map<K, V>`    | `{k: v, ...}` (iteration order)                        |
+| Sum types      | `Variant(field1, field2)` or just `Variant` for unit   |
+
+## Output streams
+
+In JIT mode, `debug` writes to **stdout**. Every other diagnostic the
+compiler or JIT produces (warnings, DML notices, test output headers)
+goes to **stderr**. A program that prints via `debug` and a runner
+that reads stdout see each other cleanly.
+
+In Salesforce mode, `debug` translates to Apex `System.debug(...)`.
+Output appears in the Apex debug log, not in your terminal. `vertex run
+--sf` filters the log and prints only the lines that correspond to
+Vertex's `debug` calls.
+
+## `W001`: the debug-in-source warning
+
+The checker emits a `W001` warning wherever `debug` appears in your
+code:
+
+```
+warning[W001]: `debug` in source
+  at billing.vtx:18:5
+    |
+ 18 |     debug "in compute_total"
+    |     ^^^^^ debug output is a dev tool; remove before shipping
+```
+
+`debug` is a development aid, not a logging API. `W001` is the
+reminder to remove it before committing. The warning is suppressed
+for scripts executed via `vertex run` (where `debug` is the point)
+but not in `vertex build`.
+
+<Aside type="caution">
+If you find yourself wanting a real log, go through Apex's logging
+facilities via [Apex FFI](/reference/salesforce/apex-ffi/). `debug`
+is intentionally limited to developer iteration.
+</Aside>
+
+## Why not `print` or `println`?
+
+There is one way to produce output. No `print`, no `println`, no
+`System.out.*`. `debug` is the one way, and the `W001` warning means
+you see a reminder every time you leave one in.

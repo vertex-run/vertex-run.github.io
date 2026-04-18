@@ -1,50 +1,264 @@
 ---
-title: Compiler Diagnostics
-description: Error and warning codes emitted by the Vertex compiler.
+title: Compiler diagnostics
+description: Every error and warning code the Vertex compiler emits, with an example and a fix.
 ---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Vertex takes diagnostics seriously. Every error has a title in plain
+English, notes about what the compiler knows, an actionable `help:`
+section, and where relevant a second span pointing at the conflicting
+declaration. This page is the index: each entry links the error code
+to an example and a one-line fix.
+
+For the format philosophy, see
+[Why Vertex: errors that teach](/why-vertex/#5-errors-that-teach).
 
 ## Errors
 
-| Code   | Meaning                                                      |
-|--------|--------------------------------------------------------------|
-| `E100` | Type mismatch                                                |
-| `E101` | Assignment to an immutable binding                           |
-| `E102` | Undefined name                                               |
-| `E103` | Wrong number of arguments                                    |
-| `E104` | Pattern not valid in this position                           |
-| `E105` | Non-exhaustive `match` (missing variants)                    |
-| `E106` | `?` applied to a non-`Result` value                          |
-| `E107` | Error types don't align in `?` propagation                   |
-| `E108` | Class does not implement all methods required by an interface|
-| `E109` | Name declared twice in the same scope                        |
-| `E110` | `...expr` spread used on a non-`List`                        |
-| `E111` | Method does not exist on this type                           |
+### `E100`: Type mismatch
+
+The expression's inferred type does not match what the context
+expects.
+
+```vertex
+let n: Int = "hello"
+```
+
+**To fix:** convert the value or change the declaration. If you meant
+the declaration to match the value, drop the annotation and let the
+compiler infer.
+
+### `E101`: Assignment to an immutable binding
+
+You tried to reassign a `let`.
+
+```vertex
+let x = 0
+x = 1
+```
+
+**To fix:** change `let` to `mutable let`, or rebind with a new name:
+`let y = 1`.
+
+### `E102`: Undefined name
+
+The name is not in scope at the point of use.
+
+```vertex
+debug grand_total
+```
+
+**To fix:** declare the binding or check the spelling. If the name
+lives in another module, add an `import`.
+
+### `E103`: Wrong number of arguments
+
+The call passes too many or too few arguments.
+
+**To fix:** match the function's parameter list, including any
+required named parameters.
+
+### `E104`: Pattern not valid in this position
+
+A pattern form is not allowed in the context (for example, an OR
+pattern that binds different shapes).
+
+**To fix:** split the pattern into separate arms, or use a wildcard
+and match on fields inside the arm body.
+
+### `E105`: Non-exhaustive `match`
+
+One or more variants of the matched type are not covered.
+
+```vertex
+type Status { Active, Inactive, Archived }
+
+fn label(s: Status): String {
+    match s {
+        Active   => "active",
+        Inactive => "inactive",
+    }
+}
+```
+
+**To fix:** add an arm for the missing variant, or a `_` wildcard if
+you genuinely mean "anything else". The compiler message lists the
+missing variants by name.
+
+### `E106`: `?` applied to a non-`Result`
+
+`?` only works on `Result<T, E>` expressions.
+
+**To fix:** return a `Result` from the subexpression, or match on it
+directly if it is an `Option`.
+
+### `E107`: Error types don't align in `?` propagation
+
+The enclosing function's error type does not match the inner
+expression's error type.
+
+**To fix:** convert with `.mapError(...)` before `?`. See the
+[error handling guide](/guides/error-handling/#crossing-error-type-boundaries).
+
+### `E108`: Class does not implement all interface methods
+
+A type declared to implement an interface is missing one or more
+methods.
+
+**To fix:** implement the missing methods listed by the compiler.
+
+### `E109`: Name declared twice
+
+A name was declared twice in the same scope.
+
+**To fix:** rename one of them, or delete the duplicate.
+
+### `E110`: `...expr` spread on a non-`List`
+
+The spread operator `...` inside a list literal was applied to a
+value that is not a `List`.
+
+**To fix:** convert to a list first, or use a regular element
+expression.
+
+### `E111`: Method does not exist on this type
+
+The method name is not defined for the receiver's type.
+
+**To fix:** check the spelling, or consult the reference for the
+available methods on the type.
+
+### `E136`: `@Test` function must take no parameters
+
+A function marked `@Test` has one or more parameters.
+
+**To fix:** remove the parameters, or move the data into the test
+body.
+
+### `E137`: `@Test` only in `_test.vtx` files
+
+A function marked `@Test` is in a non-test file.
+
+**To fix:** rename the file to end in `_test.vtx`, or remove the
+annotation.
+
+### `E138`: Non-test module imports a test module
+
+A non-test module cannot depend on a test module.
+
+**To fix:** move the imported symbol to a non-test module, or remove
+the import.
+
+### `E140`: Unknown module-level annotation
+
+The file starts with an annotation that the compiler does not
+recognise as a module-level annotation.
+
+**To fix:** check the spelling against
+[Annotations](/reference/annotations/), or move the annotation to the
+appropriate declaration.
+
+### `E141`: Multiple sharing annotations
+
+A module has more than one sharing annotation.
+
+**To fix:** keep at most one of `@WithSharing`, `@WithoutSharing`, or
+`@InheritedSharing`.
+
+### `E142`: Sharing annotation takes arguments
+
+A sharing annotation was called with parentheses or arguments.
+
+**To fix:** remove the arguments. Sharing annotations are bare.
+
+### `E203`: Reassignment of `let`
+
+Deeper form of E101 with the original declaration's location as a
+related span.
+
+**To fix:** same as E101. Use `mutable let` on the original
+declaration.
 
 ## Warnings
 
-| Code   | Meaning                                                    |
-|--------|------------------------------------------------------------|
-| `W001` | `debug` expression left in source                          |
-| `W002` | Local variable declared but never read                     |
-| `W003` | Function or closure parameter never read                   |
-| `W004` | `mutable let` binding read but never reassigned            |
-| `W005` | Private module-level function never called                 |
-| `W006` | Private module-level type or alias never referenced        |
-| `W007` | Private module-level constant never referenced             |
-| `W008` | Variant of a non-externally-constructible type never used  |
-| `W009` | Selectively imported symbol never referenced               |
+### `W001`: `debug` in source
 
-### Silencing unused-declaration warnings
+A `debug` expression was left in source code.
 
-Prefix a name with `_` (e.g. `_name`) to opt out of W002–W007. This is the
-standard convention for intentionally-unused bindings:
+**To fix:** remove it before shipping, or accept the warning if this
+is a `vertex run` script.
+
+### `W002`: Unused local binding
+
+A local `let` was declared but its value is never read.
+
+**To fix:** remove the binding, or prefix it with `_` if the side
+effect of the RHS is what you wanted (`let _ = compute()`).
+
+### `W003`: Unused parameter
+
+A function or closure parameter is never used.
+
+**To fix:** remove the parameter, or prefix the name with `_`.
+
+### `W004`: `mutable let` never reassigned
+
+A binding was declared `mutable let` but never reassigned.
+
+**To fix:** drop the `mutable` keyword.
+
+### `W005`: Private function never called
+
+A private (non-`pub`) top-level function is never referenced.
+
+**To fix:** remove it, mark it `pub` if it is part of the public API,
+or prefix the name with `_`.
+
+### `W006`: Private type or alias never used
+
+A private type declaration is never referenced.
+
+**To fix:** remove it, or mark it `pub`.
+
+### `W007`: Private constant never used
+
+A private `const` is never referenced.
+
+**To fix:** remove it, or mark it `pub const`.
+
+### `W008`: Variant never constructed
+
+A sum-type variant of an internally-constructed type is never created
+in source.
+
+**To fix:** remove the variant, or use it. If a future call site is
+planned, leave a comment; the warning stays until the variant is
+constructed.
+
+### `W009`: Imported name never used
+
+A name imported selectively is never used.
+
+**To fix:** remove the import, or use the name.
+
+## Silencing unused-declaration warnings
+
+Prefix a name with `_` to opt out of W002 through W007. This is the
+convention for intentionally-unused bindings.
 
 ```vertex
 fn process(_ignored: String): Int { 42 }   // W003 suppressed
 let _temp = expensive_computation()         // W002 suppressed
-fn _helper(): Void {}                       // W005 suppressed
+fn _helper(): Void { }                      // W005 suppressed
 ```
 
-The underscore convention does not apply to selective imports (W009) because
-the imported name is defined in another module and cannot be renamed at the
-import site. Remove unused imports instead.
+The underscore convention does not apply to selective imports (W009):
+the imported name is defined elsewhere. Remove unused imports
+instead.
+
+<Aside type="tip">
+If a warning annoys you often, that is usually evidence the code can
+be simplified. `W004` is the clearest example: it reliably flags
+mutation that did not need to be mutable.
+</Aside>

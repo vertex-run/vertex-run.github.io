@@ -15,10 +15,10 @@ directly.
 // in module user_ids.vtx
 pub opaque type UserId { UserId(value: String) }
 
-// Smart constructor — the only public way to create a UserId.
+// Smart constructor. The only public way to create a UserId.
 pub fn make(s: String): UserId { UserId(value: s) }
 
-// Public accessor — exposes the value without leaking the constructor.
+// Public accessor. Exposes the value without leaking the constructor.
 pub fn unwrap(uid: UserId): String {
     match uid {
         UserId(value: v) => v,
@@ -30,9 +30,9 @@ pub fn unwrap(uid: UserId): String {
 
 | Operation | Error |
 |-----------|-------|
-| `UserId(value: "x")` — variant constructor call | `E127` |
-| `uid.value` — field access | `E128` |
-| `match uid { UserId(value: v) => v }` — variant pattern | `E129` |
+| `UserId(value: "x")`. Variant constructor call | `E127` |
+| `uid.value`. Field access | `E128` |
+| `match uid { UserId(value: v) => v }`. Variant pattern | `E129` |
 | Record update syntax on the opaque type | `E130` |
 
 ### What is allowed outside the defining module
@@ -47,8 +47,8 @@ pub fn unwrap(uid: UserId): String {
 import user_ids.{UserId, make, unwrap}
 
 fn run(): String {
-    let uid = make("abc")   // OK — uses the smart constructor
-    unwrap(uid)             // OK — uses the public accessor
+    let uid = make("abc")   // OK. Uses the smart constructor
+    unwrap(uid)             // OK. Uses the public accessor
 }
 
 fn bad(): UserId { UserId(value: "x") }  // E127
@@ -63,7 +63,7 @@ pattern arm will be rejected with `E129`, and a match with no wildcard and no
 valid arms is non-exhaustive (`E105`).
 
 ```vertex
-// OK — wildcard covers the opaque type
+// OK. Wildcard covers the opaque type
 match uid {
     _ => "some value",
 }
@@ -75,6 +75,6 @@ match uid {
 
 ```
 pub opaque type Name { ... }   // OK
-opaque type Name { ... }       // parse error — opaque requires pub
-pub opaque fn foo() {}         // parse error — opaque only applies to types
+opaque type Name { ... }       // parse error. Opaque requires pub
+pub opaque fn foo() {}         // parse error. Opaque only applies to types
 ```

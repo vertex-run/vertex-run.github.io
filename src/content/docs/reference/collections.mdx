@@ -13,7 +13,7 @@ let empty: List<String> = []
 An empty list `[]` requires a type annotation whenever the element type cannot be determined from context:
 
 ```vertex
-let empty: List<String> = []      // OK — annotation provides T = String
+let empty: List<String> = []      // OK. Annotation provides T = String
 let empty = []                     // error: cannot infer element type
 ```
 
@@ -22,7 +22,7 @@ the annotation can be omitted:
 
 ```vertex
 fn greet(names: List<String>): Void { ... }
-greet([])   // OK — T inferred from the parameter type
+greet([])   // OK, T inferred from the parameter type
 ```
 
 Spread syntax combines lists:
@@ -33,7 +33,7 @@ let combined = [...list1, ...list2, "extra"]
 
 `...expr` (three dots) is the spread form and only appears in list *expressions*.
 The two-dot `..` is a pattern-only form for silently discarding the rest of a list
-or the unmentioned fields of a variant — see [Pattern Matching](/reference/pattern-matching/).
+or the unmentioned fields of a variant. See [Pattern Matching](/reference/pattern-matching/).
 `..` is never valid inside a list literal.
 
 Lists can be iterated with `for..in` and pattern-matched with list patterns.
@@ -47,22 +47,22 @@ There is no subscript syntax (`list[i]`). Use `get(i)` for index access.
 | `size()` | `List<T>` | `Int` | Number of elements |
 | `isEmpty()` | `List<T>` | `Bool` | `true` when size is 0 |
 | `get(i: Int)` | `List<T>` | `Option<T>` | `None` on out-of-bounds; no panic |
-| `add(item: T)` | `List<T>` | `List<T>` | Pure — returns a new list with `item` appended |
+| `add(item: T)` | `List<T>` | `List<T>` | Pure. Returns a new list with `item` appended |
 | `first()` | `List<T>` | `Option<T>` | `None` on empty list |
 | `last()` | `List<T>` | `Option<T>` | `None` on empty list |
 | `contains(item: T)` | `List<T>` | `Bool` | Value equality for primitives; reference equality for class instances |
-| `map(f: fn(T): U)` | `List<T>` | `List<U>` | Pure — returns a new list |
-| `filter(f: fn(T): Bool)` | `List<T>` | `List<T>` | Pure — returns a new list |
+| `map(f: fn(T): U)` | `List<T>` | `List<U>` | Pure. Returns a new list |
+| `filter(f: fn(T): Bool)` | `List<T>` | `List<T>` | Pure. Returns a new list |
 | `fold(init: U, f: fn(U, T): U)` | `List<T>` | `U` | Accumulator-first callback convention |
 | `any(f: fn(T): Bool)` | `List<T>` | `Bool` | Short-circuits on first match; `false` on empty |
 | `all(f: fn(T): Bool)` | `List<T>` | `Bool` | Short-circuits on first non-match; `true` on empty (vacuous truth) |
 | `enumerate()` | `List<T>` | `List<#(Int, T)>` | Pairs each element with its zero-based index |
-| `reverse()` | `List<T>` | `List<T>` | Pure — returns a new list in reversed order |
-| `prepend(item: T)` | `List<T>` | `List<T>` | Pure — returns a new list with `item` at the front |
-| `concat(other: List<T>)` | `List<T>` | `List<T>` | Pure — returns a new list with `other` appended |
-| `take(n: Int)` | `List<T>` | `List<T>` | Pure — returns the first `n` elements; `n ≤ 0` returns `[]` |
-| `drop(n: Int)` | `List<T>` | `List<T>` | Pure — skips the first `n` elements; `n ≤ 0` returns a copy |
-| `unique()` | `List<T>` | `List<T>` | Pure — removes duplicates, preserving first-occurrence order |
+| `reverse()` | `List<T>` | `List<T>` | Pure. Returns a new list in reversed order |
+| `prepend(item: T)` | `List<T>` | `List<T>` | Pure. Returns a new list with `item` at the front |
+| `concat(other: List<T>)` | `List<T>` | `List<T>` | Pure. Returns a new list with `other` appended |
+| `take(n: Int)` | `List<T>` | `List<T>` | Pure. Returns the first `n` elements; `n ≤ 0` returns `[]` |
+| `drop(n: Int)` | `List<T>` | `List<T>` | Pure. Skips the first `n` elements; `n ≤ 0` returns a copy |
+| `unique()` | `List<T>` | `List<T>` | Pure. Removes duplicates, preserving first-occurrence order |
 | `toSet()` | `List<T>` | `Set<T>` | Converts to a `Set`, removing duplicates |
 | `flatten()` | `List<List<T>>` | `List<T>` | Concatenates all inner lists into a single list |
 | `join(sep: String)` | `List<String>` | `String` | Joins all strings with `sep` |
@@ -96,7 +96,7 @@ for #(i, w) in words.enumerate() {
 | Signature | Returns | Notes |
 |-----------|---------|-------|
 | `List.generate(count: Int, f: fn(Int): T)` | `List<T>` | Calls `f` with each zero-based index `0..count-1`. `count ≤ 0` returns `[]`. |
-| `List.filled(count: Int, value: T)` | `List<T>` | Creates `count` copies of `value`. `count ≤ 0` returns `[]`. Note: all entries reference the same object — use `List.generate` for independent instances. |
+| `List.filled(count: Int, value: T)` | `List<T>` | Creates `count` copies of `value`. `count ≤ 0` returns `[]`. Note: all entries reference the same object. Use `List.generate` for independent instances. |
 
 ```vertex
 // Unique items using the index:
@@ -128,21 +128,21 @@ returns `Option<V>`.
 | `isEmpty()` | `Map<K,V>` | `Bool` | `true` when the map has zero entries |
 | `containsKey(key: K)` | `Map<K,V>` | `Bool` | `true` if the key exists |
 | `get(key: K)` | `Map<K,V>` | `Option<V>` | `Some(value)` if found, `None` otherwise |
-| `put(key: K, value: V)` | `Map<K,V>` | `Map<K,V>` | Pure — returns a new map with the key set |
-| `remove(key: K)` | `Map<K,V>` | `Map<K,V>` | Pure — returns a new map without the key |
+| `put(key: K, value: V)` | `Map<K,V>` | `Map<K,V>` | Pure. Returns a new map with the key set |
+| `remove(key: K)` | `Map<K,V>` | `Map<K,V>` | Pure. Returns a new map without the key |
 | `keys()` | `Map<K,V>` | `List<K>` | All keys as a list |
 | `values()` | `Map<K,V>` | `List<V>` | All values as a list |
 | `entries()` | `Map<K,V>` | `List<#(K, V)>` | Key-value pairs as a list of tuples |
 
 ### Factory functions
 
-`Map.empty()` — creates an empty map. A type annotation is required:
+`Map.empty()`. Creates an empty map. A type annotation is required:
 
 ```vertex
 let m: Map<String, Int> = Map.empty()
 ```
 
-`Map.fromList(list: List<#(K, V)>): Map<K, V>` — constructs a map from a list of key-value tuple pairs.
+`Map.fromList(list: List<#(K, V)>): Map<K, V>`. Constructs a map from a list of key-value tuple pairs.
 If the list contains duplicate keys, the **last** entry wins.
 
 ```vertex

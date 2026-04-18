@@ -1,0 +1,76 @@
+---
+title: String interpolation
+description: Embedding expressions in string literals with ${...} in Vertex.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+String literals support interpolation via `${...}`. Any expression is
+valid inside the braces.
+
+```vertex
+let name = "Alice"
+let age  = 30
+
+let greeting = "Hello, ${name}!"
+let summary  = "${name} is ${age} years old"
+let calc     = "${a} * ${b} = ${a * b}"
+```
+
+The embedded expression is evaluated and converted to a `String` via
+the same stringification rules used by [`debug`](/reference/output/).
+
+## Any expression works
+
+```vertex
+"path = ${home.join("/")}"              // method call
+"factorial(5) = ${factorial(5)}"         // function call
+"${if x > 0 { "positive" } else { "negative" }}"    // if-expression
+"${match status { Ok(v) => v.toString(), Error(_) => "err" }}"   // match
+```
+
+If the expression is itself a string, interpolation recurses
+naturally; no special handling is required.
+
+## Escapes
+
+String literals support the usual escapes plus one for the
+interpolation metacharacter:
+
+| Escape | Produces           |
+|--------|--------------------|
+| `\"`   | double-quote       |
+| `\\`   | backslash          |
+| `\n`   | newline            |
+| `\r`   | carriage return    |
+| `\t`   | tab                |
+| `\$`   | literal `$`        |
+
+```vertex
+let literal = "price is \$${price}"     // price is $10
+```
+
+## Nesting and quoting
+
+Double quotes inside an interpolated expression do not need escaping;
+the interpolation delimiter is `}`, not `"`.
+
+```vertex
+debug "name=${user.map(fn(u) { u.name }).unwrapOr("anonymous")}"
+```
+
+<Aside type="tip">
+If an interpolation expression grows past one line, pull it into a
+`let` binding first. Readability beats clever one-liners.
+</Aside>
+
+## Raw strings
+
+Raw string literals (without escape processing) are not currently
+supported. Use explicit escapes where needed.
+
+## Codegen
+
+Interpolations desugar into string concatenation at compile time. The
+generated Apex does not use `String.format`; it uses the `+` operator
+with stringified operands, which matches Apex's own preferred idiom.

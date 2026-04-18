@@ -1,12 +1,12 @@
 ---
-title: Apex.Object — Interop Escape Hatch
+title: Apex.Object, Interop Escape Hatch
 description: Bridging Vertex's nominal type system to Apex APIs that require the universal `Object` type.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
 `Apex.Object` is a **nominal, opaque interop type** that lets Vertex code call
-Apex APIs whose signatures name Apex's universal base type `Object` — for
+Apex APIs whose signatures name Apex's universal base type `Object`. For
 example `Database.queryWithBindings(query, Map<String, Object>, accessLevel)`
 and `JSON.deserializeUntyped(json)`.
 
@@ -15,7 +15,7 @@ and `JSON.deserializeUntyped(json)`.
 appear in idiomatic Vertex code. The type is deliberately *inert*: it has no
 methods, no fields, no pattern-matching support, and no operators. The only
 meaningful things you can do with an `Apex.Object` value are pass it back to
-an `extern` function or narrow it with `Apex.Object.as<T>` — by design.
+an `extern` function or narrow it with `Apex.Object.as<T>`. By design.
 </Aside>
 
 ## The two operations
@@ -27,10 +27,10 @@ an `extern` function or narrow it with `Apex.Object.as<T>` — by design.
 | `Apex.Object.from<T>(x: T)` | `(T) -> Apex.Object` | Wrap any typed Vertex value into `Apex.Object`. |
 | `Apex.Object.as<T>(x: Apex.Object)` | `(Apex.Object) -> Result<T, Apex.CastError>` | Runtime-check and narrow to `T`. |
 
-### `Apex.Object.from<T>(value)` — wrap
+### `Apex.Object.from<T>(value)`: wrap
 
 Takes any Vertex value and wraps it into the opaque interop type. At runtime
-this is a no-op — the value is already `Object` on the Apex side.
+this is a no-op. The value is already `Object` on the Apex side.
 
 ```vertex
 let raw: Apex.Object = Apex.Object.from(42)
@@ -38,9 +38,9 @@ let also: Apex.Object = Apex.Object.from("Acme")
 ```
 
 Calling `from` on a value that is already `Apex.Object` is a compile-time
-error — the wrapper call would be a no-op.
+error. The wrapper call would be a no-op.
 
-### `Apex.Object.as<T>(value)` — narrow
+### `Apex.Object.as<T>(value)`: narrow
 
 Runtime-checks the wrapped value and returns `Result<T, Apex.CastError>`:
 `Ok(narrowedValue)` on match, `Err(CastError(...))` on mismatch. This is the
@@ -69,15 +69,15 @@ narrow to `List<Apex.Object>` and walk the elements.
 
 ## `Apex.CastError`
 
-The error value returned by `Apex.Object.as<T>`:
+The error value returned by `Apex.Object.as<T>` has the shape (built in, not user-declarable):
 
-```vertex
-type Apex.CastError {
+```
+Apex.CastError {
     CastError(expectedType: String, actualType: String)
 }
 ```
 
-You never construct `Apex.CastError` yourself — it is produced only by the
+You never construct `Apex.CastError` yourself. It is produced only by the
 generated narrowing code. You can read its fields after pattern-matching on
 the `Err` arm.
 
@@ -106,7 +106,7 @@ let xs: List<Apex.Object> = [x, Apex.Object.from("hi")]
 let m: Map<String, Apex.Object> = { "n": x, "s": Apex.Object.from("hi") }
 ```
 
-## Motivating example — `Database.queryWithBindings`
+## Motivating example: `Database.queryWithBindings`
 
 The primary use case is calling Apex APIs whose signatures require a
 `Map<String, Object>`. Declare the extern with `Apex.Object` in the map value
@@ -132,7 +132,7 @@ fn recentNamed(name: String, since: Datetime): List<Account> {
 }
 ```
 
-`Apex.Object.from` erases to a no-op in generated Apex — the value is already
+`Apex.Object.from` erases to a no-op in generated Apex. The value is already
 `Object` in the Apex world:
 
 ```apex

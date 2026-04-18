@@ -1,0 +1,151 @@
+---
+title: Interop with existing Apex
+description: Calling Apex classes from Vertex, wrapping System APIs, and handling Apex.Object.
+sidebar:
+  order: 5
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Vertex is designed for incremental adoption. You should be able to
+drop a Vertex file into an existing Apex codebase without rewriting
+anything. This guide walks through the three tools that make that
+possible: `extern` declarations, `@SObject` types, and the
+`Apex.Object` escape hatch.
+
+For the full reference, see
+[Apex FFI](/reference/salesforce/apex-ffi/) and
+[Apex.Object](/reference/salesforce/apex-object/).
+
+## Calling an Apex class
+
+You declare the Apex surface you want to use with `extern`. A minimal
+example: send a single email via `Messaging.SingleEmailMessage`.
+
+```vertex
+extern type Messaging.SingleEmailMessage
+extern new Messaging.SingleEmailMessage(): Messaging.SingleEmailMessage
+
+extern method Messaging.SingleEmailMessage.setSubject(
+    self: Messaging.SingleEmailMessage,
+    subject: String,
+): Void
+
+extern method Messaging.SingleEmailMessage.setPlainTextBody(
+    self: Messaging.SingleEmailMessage,
+    body: String,
+): Void
+```
+
+Then use it like any other type:
+
+```vertex
+let msg = Messaging.SingleEmailMessage.new()
+msg.setSubject("Hello")
+msg.setPlainTextBody("from Vertex")
+```
+
+## Only declare what you use
+
+The temptation is to wrap the entire Apex class at once. Don't. You
+only need declarations for the methods your Vertex code actually
+calls. The generated Apex references `Messaging.SingleEmailMessage`
+directly, so unused methods on the Apex side are still available to
+your Apex callers.
+
+This keeps the Vertex codebase tidy and the surface area small.
+
+## Group `extern` declarations per Apex class
+
+A common pattern is one Vertex module per wrapped Apex class:
+
+```
+src/
+├── apex/
+│   ├── messaging.vtx           # extern wrappers for Messaging.*
+│   ├── http.vtx                # extern wrappers for Http / HttpRequest / HttpResponse
+│   └── schema.vtx              # extern wrappers for Schema.describe*
+└── billing/
+    └── invoice.vtx             # business logic imports from apex/*
+```
+
+Your Vertex business logic stays decoupled from the Apex types; the
+FFI details live in the wrapper modules.
+
+## Static methods on Apex classes
+
+Some Apex APIs are static (`Database.query`, `Http.send`, etc.). Use
+`extern fn` in a module whose name matches the Apex type:
+
+```vertex
+// apex/json.vtx
+extern fn JSON.serialize(o: Apex.Object): String
+extern fn JSON.deserializeUntyped(s: String): Apex.Object
+```
+
+## Dealing with `Apex.Object`
+
+Some Apex APIs take or return the universal `Object` type (the root
+of Apex's type hierarchy). `JSON.deserializeUntyped` is the canonical
+example: you hand it a JSON string and it gives back an untyped `Map`,
+`List`, or scalar.
+
+Vertex has a dedicated type `Apex.Object` for this. You convert from a
+typed Vertex value into `Apex.Object` with `from<T>`, and back out with
+`as<T>`:
+
+```vertex
+let raw = JSON.serialize(Apex.Object.from(inv))
+let parsed = JSON.deserializeUntyped(raw)
+let recovered: Result<Invoice, Apex.ConversionError> = parsed.as<Invoice>()
+```
+
+See [Apex.Object](/reference/salesforce/apex-object/) for the full
+conversion semantics, including how it handles nulls and type
+mismatches.
+
+## What does not work in JIT mode
+
+Any call that goes through an `extern` declaration is **not executed**
+when you run your code with `vertex run` (JIT). The JIT has no
+Salesforce runtime to call.
+
+In practice this means:
+
+- Business logic that only uses Vertex features: testable locally.
+- Code that calls Apex (DML aside): must be tested on the org.
+
+DML calls are a special case: `Database.insert`, `update`, `delete`,
+and `undelete` are simulated in JIT mode so that most business logic
+remains testable without an org.
+
+## Two-way interop
+
+Vertex-generated Apex classes can be called from existing Apex code.
+`pub fn` declarations become `public static` methods with a `vtx_`
+prefix on the generated class.
+
+```vertex
+// greet.vtx
+pub fn say_hello(name: String): String {
+    "Hello, ${name}!"
+}
+```
+
+From Apex:
+
+```apex
+String greeting = Greet.vtx_say_hello('Alice');
+```
+
+This is how a team adopts Vertex incrementally: new code is Vertex;
+existing Apex callers reach in through the generated API.
+
+## Checklist
+
+- Declare only the Apex methods you actually call.
+- Keep `extern` declarations in dedicated wrapper modules.
+- Use `Apex.Object` when (and only when) the Apex API itself takes
+  or returns `Object`.
+- Remember that `extern` calls do not run in JIT mode; plan your
+  testing strategy accordingly.

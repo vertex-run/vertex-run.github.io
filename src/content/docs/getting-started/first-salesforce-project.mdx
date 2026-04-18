@@ -1,0 +1,125 @@
+---
+title: Your first Salesforce project
+description: Scaffold a Vertex project, build it to Apex, and deploy to a scratch org.
+sidebar:
+  order: 4
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+This page walks you from a single-file Vertex script to a real project
+that builds to Apex class files and deploys to a Salesforce org.
+
+It assumes you have:
+
+- Vertex [installed](/getting-started/install/).
+- The [Salesforce CLI (`sf`)](https://developer.salesforce.com/tools/salesforcecli)
+  installed and authenticated to a scratch org or sandbox.
+
+## Project layout
+
+A Vertex project is any directory containing an `sfdx-project.json`
+file. The file tells the Salesforce tooling where your Apex source
+lives; Vertex uses the same file to locate your Vertex source.
+
+The conventional layout:
+
+```
+my-project/
+├── sfdx-project.json
+├── src/                          # .vtx source goes here
+│   └── hello.vtx
+└── force-app/
+    └── main/
+        └── default/
+            └── classes/          # vertex build writes .cls files here
+```
+
+A minimal `sfdx-project.json`:
+
+```json
+{
+  "packageDirectories": [
+    { "path": "force-app", "default": true }
+  ],
+  "sourceApiVersion": "66.0"
+}
+```
+
+## Write an entry point
+
+Vertex programs that run as real Apex classes expose a `pub fn run`
+entry point. Create `src/hello.vtx`:
+
+```vertex
+pub fn run(): Void {
+    debug "Hello from Vertex on Salesforce!"
+}
+```
+
+This compiles to a `public static void vtx_run()` method on a generated
+Apex class.
+
+## Build
+
+From the project root:
+
+```
+$ vertex build
+Success! Built 1 class(es) to force-app/main/default/classes/
+```
+
+Look inside `force-app/main/default/classes/` and you will see a
+`.cls` file and a `.cls-meta.xml` file ready for deployment.
+
+## Deploy
+
+```
+$ sf project deploy start --target-org <alias>
+```
+
+Use the alias you set up with `sf org login`. Do not pass `--source-dir`
+or `--metadata`: the `sf` CLI tracks local changes internally.
+
+## Run it
+
+Create `run-hello.apex`:
+
+```apex
+Hello.vtx_run();
+```
+
+Then:
+
+```
+$ sf apex run --target-org <alias> --file run-hello.apex
+```
+
+You should see your debug line in the Apex log.
+
+## The full development loop
+
+For day-to-day iteration, you rarely need the org. The loop is:
+
+1. Edit a `.vtx` file.
+2. `vertex run <file>` to execute it locally (millisecond feedback).
+3. `vertex test` to run your `*_test.vtx` files.
+4. `vertex build` and `sf project deploy start` when you are ready to
+   ship.
+
+See [The vertex CLI](/tooling/cli/) for the full command reference and
+[Testing](/reference/testing/) for the test runner.
+
+<Aside type="note">
+`vertex run` works on the JIT by default. To run the *same file* on
+Salesforce instead, add `--sf --org <alias>`. That is useful when you
+want to verify generated Apex behaviour against a real org without
+building and deploying classes.
+</Aside>
+
+## Next
+
+- [Editor setup](/getting-started/editor-setup/): get syntax
+  highlighting, diagnostics, and completions in your editor.
+- [Guides: Building for Salesforce](/guides/salesforce-projects/): a
+  deeper look at SObjects, DML, and `@AuraEnabled`.

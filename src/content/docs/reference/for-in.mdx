@@ -1,21 +1,114 @@
 ---
 title: for..in Loop
-description: Iterating over lists with the for..in loop in Vertex.
+description: Iterating over a list with for..in in Vertex.
 ---
 
-Iterates over a `List<T>`. The loop variable is immutable inside the body.
+import { Aside } from '@astrojs/starlight/components';
+
+`for..in` is Vertex's iteration statement. It walks a `List<T>`,
+binding each element to a pattern.
 
 ```vertex
-mutable let total = 0
-for item in items {
-    total = total + item
+for n in [1, 2, 3] {
+    debug n
 }
 ```
 
-The loop head supports full pattern destructuring:
+There is no `while` statement. Iteration is expressed with `for..in`,
+recursion, or collection combinators (`map`, `filter`, `fold`).
+
+## Over a list
 
 ```vertex
-for #(index, value) in pairs { ... }      // tuple destructuring
-for Circle(radius: r) in shapes { ... }   // variant destructuring
-for _ in items { ... }                     // wildcard
+let names = ["Alice", "Bob", "Carol"]
+for name in names {
+    debug "hello, ${name}"
+}
 ```
+
+The loop variable is immutable inside the body. To accumulate a
+result across iterations, declare a `mutable let` outside the loop,
+or prefer `fold`:
+
+```vertex
+// Imperative style
+mutable let total = 0
+for n in [1, 2, 3] {
+    total = total + n
+}
+debug total     // 6
+```
+
+```vertex
+// Functional style, no mutation
+let total = [1, 2, 3].fold(0, fn(acc: Int, n: Int): Int { acc + n })
+debug total     // 6
+```
+
+## Destructuring in the loop head
+
+The loop head accepts any pattern, so you can destructure tuples,
+records, or variants without an intermediate binding:
+
+```vertex
+// Tuple destructuring
+for #(index, value) in pairs {
+    debug "${index}: ${value}"
+}
+
+// Variant destructuring (matches only shapes of this variant)
+for Circle(radius: r) in shapes {
+    debug "radius ${r}"
+}
+
+// Wildcard
+for _ in items {
+    counter = counter + 1
+}
+```
+
+<Aside type="caution">
+A variant pattern in the loop head only binds successfully when every
+element of the list matches that variant. Mixing variants means
+skipping elements that do not match; use `match` inside the loop if
+you need to dispatch per-element:
+
+```vertex
+for shape in shapes {
+    match shape {
+        Circle(radius: r)    => ...,
+        Rectangle(width: w, height: h) => ...,
+    }
+}
+```
+</Aside>
+
+## Iterating with an index
+
+`List.enumerate()` pairs each element with its zero-based index,
+returning a `List<#(Int, T)>` you can destructure:
+
+```vertex
+for #(i, name) in names.enumerate() {
+    debug "${i}. ${name}"
+}
+```
+
+## Why no `for..in` over Map or Set?
+
+Iteration order over a `Map` or `Set` is not guaranteed. Convert the
+collection to a list first to make the order explicit:
+
+```vertex
+for #(k, v) in entries.toList() { ... }     // Map.toList(): List<#(K, V)>
+for item in set.toList() { ... }             // Set.toList():  List<T>
+```
+
+This keeps the iteration order visible in the code rather than
+depending on hash-order surprises.
+
+## Codegen
+
+`for..in` emits as a Java-style `for (T name : collection) { ... }` in
+the generated Apex, with pattern destructuring expanded into the loop
+body.

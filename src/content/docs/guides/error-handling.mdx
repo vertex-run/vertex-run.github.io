@@ -1,0 +1,156 @@
+---
+title: Error handling with Result
+description: Designing fallible APIs in Vertex, using the ? operator, and building error types that compose.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Vertex has no exceptions in user code. Every fallible operation
+returns `Result<T, E>`. This guide is about the design patterns that
+turn that raw primitive into APIs that are pleasant to use.
+
+If you have not met `Result` yet, start with
+[tour Chapter 8](/tour/08-option-and-result/) and
+[the Result reference](/reference/result/).
+
+## The core idea
+
+The compiler's rule is simple: if your function might fail, it
+returns `Result<T, E>`. The type signature is the API contract. Every
+caller has to handle both the success and the failure case, usually
+with `match` or the `?` operator.
+
+```vertex
+fn validate_age(age: Int): Result<Int, String> {
+    if age < 0 {
+        Error("age cannot be negative")
+    } else if age > 150 {
+        Error("age is unrealistically large")
+    } else {
+        Ok(age)
+    }
+}
+```
+
+## Use `?` when you are forwarding the error
+
+The `?` operator is how you say *"propagate this error unchanged if it
+occurred; otherwise give me the success value."* It is how you keep
+the happy path readable.
+
+```vertex
+fn greet(age: Int): Result<String, String> {
+    let a = validate_age(age)?
+    Ok(if a < 18 { "hi, kid" } else { "hello" })
+}
+```
+
+If `validate_age` returns `Error(e)`, `greet` returns `Error(e)` at
+that point and the rest of the function body does not run. If it
+returns `Ok(a)`, `a` is bound to the inner value and execution
+continues.
+
+<Aside type="tip">
+`?` only works inside a function whose return type is
+`Result<_, SameError>` (or a compatible error type). If the error
+types do not line up, you need `mapError` to bridge them; see below.
+</Aside>
+
+## Designing error types
+
+For small programs, `Result<T, String>` is fine. For anything that
+survives a code review, introduce a real error type.
+
+A good error type is a sum type with one variant per *kind* of
+failure:
+
+```vertex
+type InvoiceError {
+    NegativeAmount(line: Int),
+    ZeroLineItems,
+    InvalidCustomerId(id: String),
+}
+
+fn total_invoice(inv: Invoice): Result<Decimal, InvoiceError> { ... }
+```
+
+Pattern matching on the call site becomes type-safe and exhaustive:
+
+```vertex
+match total_invoice(inv) {
+    Ok(total)                     => debug "${total}",
+    Error(NegativeAmount(line:))  => debug "line ${line} was negative",
+    Error(ZeroLineItems)          => debug "no items on invoice",
+    Error(InvalidCustomerId(id:)) => debug "bad customer: ${id}",
+}
+```
+
+## Crossing error-type boundaries
+
+When you call a helper that returns `Result<_, HelperError>` from a
+function that returns `Result<_, CallerError>`, you need `mapError`:
+
+```vertex
+fn pricing_job(age: Int): Result<Decimal, JobError> {
+    let a = validate_age(age).mapError(fn(msg: String): JobError {
+        InvalidInput(msg)
+    })?
+    // rest of the computation uses `a`
+    Ok(0.0d)
+}
+```
+
+The pattern is: *`helper_call().mapError(wrap_into_my_error_type)?`*.
+`mapError` converts the error variant only; the success value flows
+through unchanged.
+
+## Do not reach for exceptions through FFI
+
+Calling Apex can throw. If you are bridging an Apex library, catch the
+exception at the boundary and convert it to a `Result`:
+
+```vertex
+fn safe_call(): Result<Account, DmlError> {
+    // inside a well-defined extern wrapper
+    match Database.insert(acc) {
+        Ok(id)        => Ok(acc.withId(id)),
+        Error(dmlErr) => Error(dmlErr),
+    }
+}
+```
+
+Do not surface exceptions up through your Vertex code. The point of
+`Result` is that the caller knows, from the signature, that the
+operation can fail. Thrown-across-FFI exceptions defeat that.
+
+## `let assert` is a last resort
+
+`let assert` is Vertex's way of saying *"I know this cannot fail; if
+I'm wrong, crash."* It is useful in tests and one-off scripts; it is
+rarely correct in production code.
+
+```vertex
+// OK in a test: fixture setup you know is valid
+let assert Ok(acc) = Database.insert(Account(Name: "Test"))
+
+// Not OK in production: you have just traded a Result for a crash
+```
+
+When you find yourself wanting `let assert` in real code, consider
+returning `Result` from the enclosing function instead.
+
+## Checklist
+
+When reviewing code that uses `Result`:
+
+- Does every fallible function say so in its return type?
+- Are error variants specific enough that a caller can decide what to
+  do, not just log and give up?
+- Is the `?` operator used where the intent is "forward the error
+  unchanged"?
+- Is `mapError` used when crossing error-type boundaries?
+- Is `let assert` reserved for tests and known-valid invariants?
+
+If all five answers are yes, the code is in good shape.

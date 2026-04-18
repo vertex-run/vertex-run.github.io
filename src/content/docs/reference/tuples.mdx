@@ -1,21 +1,95 @@
 ---
 title: Tuples
-description: Fixed-size heterogeneous tuples using the #(...) syntax in Vertex.
+description: Fixed-size heterogeneous tuples in Vertex, with the #(...) syntax.
 ---
 
+import { Aside } from '@astrojs/starlight/components';
+
+A tuple groups a fixed number of values of possibly-different types
+into one. Unlike a record, a tuple's elements are positional: you
+reach them by their position, not by a field name.
+
+Tuples are written with the `#(...)` syntax. The hash distinguishes
+them from parenthesized expressions.
+
+## Creating tuples
+
 ```vertex
-let point = #(1.0, 2.0)
-let #(x, y) = point         // destructuring in let
-let #(_, y) = point         // ignore first element
+let point    = #(1.0, 2.0)                    // #(Double, Double)
+let tagged   = #("active", 42)                // #(String, Int)
+let nested   = #(#(0, 0), #(1, 1))            // tuple of tuples
 ```
 
-Tuples use `#(...)` syntax. Destructuring is supported in `let` bindings,
-`for` loop heads, and `match` expressions:
+There is no one-element tuple. `#(x)` is not a valid syntax; a single
+value is just the value.
+
+## Destructuring
+
+Tuples destructure in `let`, in `for..in` heads, in `match` arms, and
+in function parameters whose types are tuples.
 
 ```vertex
+let #(x, y) = point
+debug "x=${x}, y=${y}"
+
+// Ignore an element with _
+let #(_, y) = point
+
+// In a for loop
+for #(index, value) in entries {
+    debug "${index}: ${value}"
+}
+
+// In match
 fn describe(p: #(Int, Int)): String {
-  match p {
-    #(x, y) => "x=" + x.toString() + ", y=" + y.toString(),
-  }
+    match p {
+        #(0, 0)     => "origin",
+        #(_, 0)     => "on x-axis",
+        #(0, _)     => "on y-axis",
+        #(x, y)     => "point (${x}, ${y})",
+    }
 }
 ```
+
+## Where tuples are useful
+
+- **Returning two values.** `(name, age)`, `(line, column)`, `(ok, reason)`.
+- **Map entries.** `Map.of([#("Alice", 30), #("Bob", 25)])` uses a
+  list of 2-tuples as key-value pairs.
+- **Enumerated iteration.** `list.enumerate()` returns `List<#(Int, T)>`.
+
+If the elements are meaningfully named, prefer a `type` with named
+fields instead:
+
+```vertex
+// Prefer a named record when the fields have meaning
+type Location {
+    Location(line: Int, column: Int)
+}
+
+// Tuple is fine when the role of each slot is obvious from context
+fn minMax(xs: List<Int>): Option<#(Int, Int)> { ... }
+```
+
+<Aside type="tip">
+Tuples have no field names by design. The moment you find yourself
+reaching for `.first`, `.second`, or `._1`, convert the tuple to a
+named record. Readers will thank you.
+</Aside>
+
+## Tuples are values
+
+Tuples are compared by structural equality (element-wise): two tuples
+of the same type with equal elements are equal.
+
+```vertex
+let a = #(1, "x")
+let b = #(1, "x")
+debug a == b    // true
+```
+
+## Codegen
+
+Tuples emit as a Vertex-internal record in the generated Apex. You
+rarely need to reason about this; they behave as ordinary values at
+both the Vertex and Apex levels.

@@ -1,0 +1,68 @@
+---
+title: Editor setup
+description: Syntax highlighting, diagnostics, and completions via the built-in LSP.
+sidebar:
+  order: 5
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Vertex ships with a language server (LSP). Any editor that speaks LSP
+can use it for real-time diagnostics, completions, hover, and
+go-to-definition. The fastest path today is the Zed extension, which
+wires everything up for you.
+
+## Zed (recommended)
+
+Install the **Vertex** extension from Zed's extensions pane. It
+provides:
+
+- Syntax highlighting via the Vertex tree-sitter grammar.
+- Real-time diagnostics as you type.
+- Completions for keywords, built-in types, stdlib methods, and
+  identifiers in scope.
+- Hover and go-to-definition for declarations.
+
+The extension automatically downloads the correct `vertex` binary for
+your platform. If you already have `vertex` on your `PATH`, it uses
+that.
+
+Source: [vertex-run/zed-vertex](https://github.com/vertex-run/zed-vertex).
+
+## Other editors
+
+Any editor that can run an LSP server can drive the Vertex LSP. The
+command to launch it is:
+
+```
+vertex lsp
+```
+
+This reads and writes LSP protocol on stdin/stdout. Exact wiring
+depends on your editor's LSP client; the things you will need to
+configure:
+
+- **Language ID**: `vertex`
+- **File pattern**: `*.vtx`
+- **Server command**: `vertex lsp`
+- **Initialization options**: none required
+
+For syntax highlighting outside Zed, the tree-sitter grammar lives at
+[vertex-run/tree-sitter-vertex](https://github.com/vertex-run/tree-sitter-vertex).
+
+<Aside type="note">
+Purpose-built extensions for VS Code and JetBrains IDEs are not yet
+available. If you set one up, we would love to hear about it: open an
+issue at [vertex-run/vertex](https://github.com/vertex-run/vertex/issues).
+</Aside>
+
+## Formatter
+
+A formatter is not yet available. The language uses braces `{}`, no
+semicolons, and a 4-space indent as its baseline style; following the
+examples in the [tour](/tour/01-hello-world/) and
+[reference](/reference/) will keep you close to idiomatic.
+
+## Next
+
+Now that you are set up, start the [Language Tour](/tour/01-hello-world/).

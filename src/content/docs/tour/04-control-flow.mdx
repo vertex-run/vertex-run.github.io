@@ -33,12 +33,12 @@ A block `{ ... }` is also an expression. Its value is its **trailing expression*
 let result = {
     let x = 5
     let y = 3
-    x * y       // trailing expression — this is the block's value
+    x * y       // trailing expression. This is the block's value
 }
 debug result    // 15
 ```
 
-## `if let` — conditional pattern matching
+## `if let`: conditional pattern matching
 
 `if let` checks whether a value matches a pattern, and if so, binds the pattern's
 variables in the then-block. It is the idiomatic way to handle a single variant:
@@ -51,7 +51,7 @@ fn find_user(id: Int): Option<String> {
 if let Some(name) = find_user(42) {
     debug "Found: ${name}"
 }
-// (nothing printed — find_user(42) returns None)
+// (nothing printed. Find_user(42) returns None)
 
 // With else:
 let greeting = if let Some(name) = find_user(1) {
@@ -62,7 +62,7 @@ let greeting = if let Some(name) = find_user(1) {
 debug greeting   // "Hello, Alice!"
 ```
 
-Pattern bindings are scoped to the then-block only — not visible in the `else` branch.
+Pattern bindings are scoped to the then-block only. Not visible in the `else` branch.
 
 ## Early return
 
@@ -86,6 +86,6 @@ fn safe_divide(a: Int, b: Int): Result<Int, String> {
 
 ## Next steps
 
-- [Control Flow reference](/reference/control-flow/) — full `if let` spec
-- [Pattern Matching](/reference/pattern-matching/) — `match` for exhaustive dispatch
-- [Result\<T, E\>](/reference/result/) — the right way to model failure
+- [Control Flow reference](/reference/control-flow/): full `if let` spec
+- [Pattern Matching](/reference/pattern-matching/), `match` for exhaustive dispatch
+- [Result\<T, E\>](/reference/result/): the right way to model failure

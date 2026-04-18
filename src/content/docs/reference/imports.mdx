@@ -9,7 +9,7 @@ are resolved by both `vertex build` (for compiling to Apex classes) and
 
 ## Import forms
 
-**Bare import** — access the module's public symbols via a qualifier:
+**Bare import**. Access the module's public symbols via a qualifier:
 
 ```vertex
 import accounts
@@ -19,7 +19,7 @@ let acc = accounts.findById("001")
 let inv = invoices.create()   // qualifier is the last segment
 ```
 
-**Aliased import** — choose your own qualifier:
+**Aliased import**. Choose your own qualifier:
 
 ```vertex
 import billing.invoices as inv
@@ -27,7 +27,7 @@ import billing.invoices as inv
 let i = inv.create()
 ```
 
-**Selective import** — bring specific symbols directly into scope:
+**Selective import**. Bring specific symbols directly into scope:
 
 ```vertex
 import accounts.{ findById, Account }
@@ -58,7 +58,7 @@ Selectively imported types emit as `TargetClass.TypeName` in Apex.
 
 ## `vertex run` and imports
 
-`vertex run` supports imports directly — no build step required for local scripts.
+`vertex run` supports imports directly. No build step required for local scripts.
 
 **No imports → no project needed.** A file with no `import` declarations runs
 anywhere, just like `dart run` on a standalone Dart file.
@@ -87,7 +87,7 @@ debug greet("World")
 ```
 
 ```
-dart run bin/vertex.dart run scripts/hello.vtx
+vertex run scripts/hello.vtx
 ```
 
 **`--sf` with imports.** When using `--sf` with an entry script that has imports,
@@ -105,7 +105,7 @@ org returns a runtime "unknown class" error.
 
 **The entry file is a script, not a module.** It may contain top-level
 statements and a trailing expression. It is excluded from the module graph even
-if it lives under `src/` — other modules cannot import the entry file.
+if it lives under `src/`. Other modules cannot import the entry file.
 
 ## Visibility
 

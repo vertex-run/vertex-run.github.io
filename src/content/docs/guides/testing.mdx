@@ -1,0 +1,140 @@
+---
+title: Testing your code
+description: Writing @Test functions, structuring test files, and testing Salesforce code without an org.
+sidebar:
+  order: 4
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Vertex tests run locally. You do not need a Salesforce org to iterate
+on tests, not even for DML-heavy code. This guide covers the day-to-day
+workflow.
+
+For the definitive rules, see [the Testing reference](/reference/testing/).
+
+## Your first test
+
+Create a file whose name ends in `_test.vtx`:
+
+```vertex
+// invoice_test.vtx
+import billing.invoice
+
+@Test
+fn totals_include_tax(): Void {
+    let inv = invoice.new_line_item(100)
+    assert invoice.total_with_tax(inv: inv, tax_rate: 10) == 110
+}
+```
+
+Run it:
+
+```
+$ vertex test src/billing/invoice_test.vtx
+✓ totals include tax
+1 passed, 0 failed  (12ms)
+```
+
+Or discover and run everything:
+
+```
+$ vertex test
+```
+
+## Structure tests around behaviour, not methods
+
+A test name reads best as a full sentence. The compiler does not care;
+your future self does.
+
+```vertex
+// Good
+@Test fn totals_include_tax(): Void { ... }
+@Test fn zero_line_invoice_is_rejected(): Void { ... }
+
+// Less good
+@Test fn test_calculate_total_1(): Void { ... }
+```
+
+Group tests by the behaviour they describe, not by the function they
+happen to call.
+
+## Assertions
+
+Use `assert` for individual checks. The failure message includes the
+expression and the runtime value:
+
+```vertex
+@Test
+fn adds_two_numbers(): Void {
+    assert 1 + 1 == 2
+    assert "hello".length() == 5
+}
+```
+
+For checks you want to phrase as a one-liner with a richer message,
+fall back to pattern assertions:
+
+```vertex
+@Test
+fn user_is_found(): Void {
+    let assert Some(user) = find_user(id: "42")
+    assert user.name == "Alice"
+}
+```
+
+## DML-heavy tests without an org
+
+In JIT mode, DML operations are simulated:
+
+- `Database.insert(sobj)` returns `Ok(stub_id)` and prints a notice to
+  stderr.
+- `Database.update`, `delete`, and `undelete` also return `Ok(...)`.
+
+Your logic runs the same way it would on an org, but without the
+latency and without touching real data.
+
+```vertex
+@Test
+fn creates_and_updates_in_sequence(): Void {
+    let acc = Account(Name: "Test Co")
+    let assert Ok(id) = Database.insert(acc)
+    let updated = Account(Name: "Renamed", Id: Some(id))
+    let assert Ok(_) = Database.update(updated)
+}
+```
+
+The assertion tells you *your code* does the right sequence of calls;
+it does not tell you the org accepted them. When that matters, run the
+same test on the org via
+[the build+deploy flow](/guides/salesforce-projects/).
+
+## Filtering during development
+
+```
+$ vertex test --filter invoice
+```
+
+Runs only tests whose names contain `invoice`. Useful while you are
+iterating on one bug.
+
+## Test modules are separate from production modules
+
+The compiler enforces it: non-test modules may not import test
+modules. This keeps your test helpers out of the Apex classes that
+`vertex build` emits. Production imports test: compile error.
+
+## What is not yet supported
+
+- **Mocking Apex FFI calls.** `extern`-declared functions do not run
+  in JIT mode at all. Tests that need an Apex API must either avoid it
+  in the unit under test or run on the org.
+- **Test fixtures.** There is no before/after hook yet; each `@Test`
+  function is self-contained. Factor out a helper function when the
+  setup is shared.
+- **Parameterised tests.** There is no built-in table-driven test
+  support. A `for n in cases { assert check(n) }` loop is an
+  acceptable substitute.
+
+See the [Testing reference](/reference/testing/) for the exact rules
+enforced by the checker.

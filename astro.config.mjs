@@ -9,89 +9,140 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "Vertex",
-      description: "The Vertex language tour and reference",
+      description: "A modern programming language for Salesforce.",
       social: [],
       sidebar: [
         { label: "Introduction", link: "/" },
+        { label: "Why Vertex?", link: "/why-vertex/" },
+        {
+          label: "Getting Started",
+          items: [
+            { label: "Overview", link: "/getting-started/" },
+            { label: "Install Vertex", link: "/getting-started/install/" },
+            { label: "Your first program", link: "/getting-started/first-program/" },
+            {
+              label: "Your first Salesforce project",
+              link: "/getting-started/first-salesforce-project/",
+            },
+            { label: "Editor setup", link: "/getting-started/editor-setup/" },
+          ],
+        },
         {
           label: "Language Tour",
           autogenerate: { directory: "tour" },
         },
         {
+          label: "Guides",
+          items: [
+            { label: "Overview", link: "/guides/" },
+            { label: "Error handling with Result", link: "/guides/error-handling/" },
+            { label: "Pattern matching in practice", link: "/guides/pattern-matching/" },
+            { label: "Testing your code", link: "/guides/testing/" },
+            { label: "Interop with existing Apex", link: "/guides/apex-interop/" },
+            { label: "Building for Salesforce", link: "/guides/salesforce-projects/" },
+          ],
+        },
+        { label: "Coming from Apex", link: "/coming-from-apex/" },
+        {
           label: "Reference",
           items: [
             {
-              label: "Basics",
-              autogenerate: { directory: "reference/basics" },
-            },
-            {
-              label: "Expressions",
-              autogenerate: { directory: "reference/expressions" },
-            },
-            {
-              label: "Statements",
+              label: "Syntax & Expressions",
               items: [
-                { label: "Control Flow", link: "reference/control-flow" },
-                { label: "for..in Loop", link: "reference/for-in" },
+                { label: "Primitive Types", link: "/reference/primitive-types/" },
+                { label: "Bindings and constants", link: "/reference/bindings/" },
+                { label: "Output", link: "/reference/output/" },
+                { label: "Operators", link: "/reference/operators/" },
+                {
+                  label: "String interpolation",
+                  link: "/reference/string-interpolation/",
+                },
+                { label: "Assertions", link: "/reference/assertions/" },
+              ],
+            },
+            {
+              label: "Control Flow",
+              items: [
+                { label: "Control Flow", link: "/reference/control-flow/" },
+                { label: "for..in loop", link: "/reference/for-in/" },
+                { label: "Pattern matching", link: "/reference/pattern-matching/" },
               ],
             },
             {
               label: "Functions & Types",
               items: [
-                { label: "Functions", link: "reference/functions" },
-                { label: "Sum Types", link: "reference/sum-types" },
-                {
-                  label: "Pattern Matching",
-                  link: "reference/pattern-matching",
-                },
-                { label: "Tuples", link: "reference/tuples" },
-                { label: "Type Aliases", link: "reference/type-aliases" },
-                { label: "Opaque Types", link: "reference/opaque-types" },
+                { label: "Functions", link: "/reference/functions/" },
+                { label: "Sum Types", link: "/reference/sum-types/" },
+                { label: "Tuples", link: "/reference/tuples/" },
+                { label: "Type Aliases", link: "/reference/type-aliases/" },
+                { label: "Opaque Types", link: "/reference/opaque-types/" },
               ],
             },
             {
-              label: "Data",
+              label: "Error Handling",
               items: [
-                { label: "Option<T>", link: "reference/option" },
-                { label: "Result<T, E>", link: "reference/result" },
-                { label: "Collections", link: "reference/collections" },
+                { label: "Option<T>", link: "/reference/option/" },
+                { label: "Result<T, E>", link: "/reference/result/" },
+              ],
+            },
+            {
+              label: "Collections",
+              items: [
+                { label: "Collections", link: "/reference/collections/" },
               ],
             },
             {
               label: "Modules",
               items: [
-                { label: "Annotations", link: "reference/annotations" },
-                { label: "Imports", link: "reference/imports" },
+                { label: "Imports", link: "/reference/imports/" },
+                { label: "Annotations", link: "/reference/annotations/" },
               ],
             },
             {
-              label: "Tooling",
-              items: [{ label: "Testing", link: "reference/testing" }],
+              label: "Testing",
+              items: [
+                { label: "Testing", link: "/reference/testing/" },
+              ],
             },
             {
               label: "Salesforce",
               items: [
+                { label: "Overview", link: "/reference/salesforce/" },
                 {
                   label: "Salesforce Integration",
-                  link: "reference/salesforce-integration",
+                  link: "/reference/salesforce/integration/",
                 },
-                { label: "Apex FFI", link: "reference/apex-ffi" },
+                { label: "Apex FFI", link: "/reference/salesforce/apex-ffi/" },
+                { label: "Apex.Object", link: "/reference/salesforce/apex-object/" },
               ],
             },
             {
               label: "Standard Library",
-              autogenerate: { directory: "reference/stdlib" },
-            },
-            {
-              label: "Appendix",
               items: [
-                {
-                  label: "Compiler Diagnostics",
-                  link: "reference/diagnostics",
-                },
-                { label: "Current Limitations", link: "reference/limitations" },
+                { label: "Overview", link: "/reference/stdlib/" },
+                { label: "Date", link: "/reference/stdlib/date/" },
+                { label: "DateTime", link: "/reference/stdlib/datetime/" },
+                { label: "DateFormat", link: "/reference/stdlib/date-format/" },
+                { label: "Numeric", link: "/reference/stdlib/numeric/" },
+                { label: "String", link: "/reference/stdlib/string/" },
               ],
             },
+          ],
+        },
+        {
+          label: "CLI & Tooling",
+          items: [
+            { label: "Overview", link: "/tooling/" },
+            { label: "The vertex CLI", link: "/tooling/cli/" },
+            { label: "Project structure", link: "/tooling/project-structure/" },
+            { label: "Editor integration", link: "/tooling/editor-integration/" },
+          ],
+        },
+        {
+          label: "Appendix",
+          items: [
+            { label: "Diagnostics", link: "/reference/diagnostics/" },
+            { label: "Current Limitations", link: "/reference/limitations/" },
           ],
         },
         {

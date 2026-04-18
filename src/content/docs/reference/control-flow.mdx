@@ -5,7 +5,7 @@ description: if/else, if let, block expressions, and return in Vertex.
 
 import { Aside } from '@astrojs/starlight/components';
 
-### `if` / `else` — an expression, produces a value
+### `if` / `else`: an expression, produces a value
 
 ```vertex
 let grade = if score >= 90 {
@@ -19,7 +19,7 @@ let grade = if score >= 90 {
 
 An `if` without `else` is only valid where a `Void` value is acceptable.
 
-### `if let` — conditional variant matching
+### `if let`: conditional variant matching
 
 `if let` checks whether a value matches a pattern and, if so, binds the
 pattern's variables in the then-block. It is the idiomatic way to handle a
@@ -57,7 +57,7 @@ if let Circle(radius: r) = shape {
 }
 ```
 
-**Scoping:** Pattern bindings are scoped to the **then-block only** — they are
+**Scoping:** Pattern bindings are scoped to the **then-block only**. They are
 not visible in the `else` branch or after the `if let` expression.
 
 **When to use each construct:**
@@ -82,7 +82,7 @@ let result = {
 }
 ```
 
-### `return` — early exit from a function
+### `return`: early exit from a function
 
 ```vertex
 fn divide(

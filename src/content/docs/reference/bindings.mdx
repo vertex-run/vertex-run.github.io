@@ -1,0 +1,169 @@
+---
+title: Bindings and constants
+description: let, mutable let, and const in Vertex, plus scoping and shadowing rules.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Vertex has three binding forms: `let` (immutable local), `mutable let`
+(mutable local), and `const` (module-level compile-time constant).
+
+## `let`: immutable local bindings
+
+```vertex
+let name = "Alice"              // immutable; cannot be reassigned
+let count: Int = 42             // optional explicit type annotation
+```
+
+Reassigning an immutable binding is a compile-time error (`E101`). Type
+annotations are optional when the type can be inferred from the
+initializer.
+
+### Scoping
+
+`let` bindings are lexically scoped. They are visible from the point
+of declaration to the end of the enclosing block.
+
+```vertex
+fn compute(x: Int): Int {
+    let doubled = x * 2     // visible for the rest of compute
+    if doubled > 100 {
+        let big = true      // visible only inside this if-block
+        debug big
+    }
+    // 'big' is not visible here
+    doubled
+}
+```
+
+### Shadowing
+
+Declaring a new `let` with a name already in scope shadows the outer
+binding for the remainder of the block. Shadowing is allowed, common,
+and often preferred to mutation.
+
+```vertex
+let x = "42"
+let x = Int.parse(x)   // a new binding; outer x is shadowed
+```
+
+### Unused-binding warnings
+
+If you declare a `let` you do not use, the compiler emits `W002`. To
+silence the warning on a binding you genuinely do not need, prefix
+the name with `_`:
+
+```vertex
+let _unused = compute()   // no warning
+```
+
+## `mutable let`: mutable local bindings
+
+```vertex
+mutable let total = 0
+total = total + 1
+total = total + 1
+debug total   // 2
+```
+
+Reassignment is allowed only on `mutable let`. The `mutable` keyword
+is part of the declaration, not a modifier on later assignments; every
+reassignment without that keyword on the original declaration is a
+compile error.
+
+`mutable` applies to the binding, not to the value: you cannot
+"mutate" an immutable list via a mutable binding. Collections are
+themselves immutable; mutation happens by binding a new value.
+
+## `const`: module-level constants
+
+Module-level constants are declared with `const`. Their right-hand
+side is evaluated at compile time, so only compile-time-constant
+expressions are allowed: scalar literals, arithmetic on constants,
+collection literals of constants, and references to other constants
+in the same module.
+
+```vertex
+const max_retries = 3
+const api_version: String = "v2"
+pub const discount_rate = 10    // visible to importers
+```
+
+### Scalar literals
+
+Any of `Int`, `Long`, `Double`, `Decimal`, `Bool`, or `String` may
+appear on the right-hand side directly.
+
+```vertex
+const enabled = true
+const pi: Double = 3.14
+const greeting = "Hello"
+```
+
+String interpolation is not permitted in constant strings.
+
+### Arithmetic and references
+
+Binary `+`, `-`, `*`, `/`, `%` are allowed on numeric constants. `+`
+on two `String` operands performs concatenation. Unary minus is
+allowed.
+
+A constant may reference any other `const` in the same module, even
+one declared later. Cycles are an error.
+
+```vertex
+const doubled = base * 2   // forward reference: fine
+const base = 10
+```
+
+### Collection literals
+
+Lists, maps, and sets of constants can be `const` values.
+
+```vertex
+const statuses = ["Draft", "Active", "Closed"]
+const codes = {200: "OK", 404: "Not Found"}
+const flags = #{true, false}
+```
+
+Empty collections need an explicit type annotation so the element
+type is known.
+
+```vertex
+const empty: List<String> = []
+```
+
+### Visibility
+
+- **Private** (`const ...`): accessible within the same module only.
+- **Public** (`pub const ...`): exported in the module's signature
+  and accessible via `module.name`.
+
+Selective import of a `pub const` by name is not yet supported. Use a
+bare `import foo` and qualify with `foo.constant`.
+
+### Codegen
+
+- **Class-file Apex.** Emits as `[public|private] final static Type name = value;`.
+- **Anonymous Apex.** Emits as `final Type name = value;` at the top
+  of the block, before any body statements.
+
+The emitted value is always the fully-evaluated compile-time literal,
+never a reference or expression.
+
+## Picking the right binding
+
+A rule of thumb:
+
+- If the value does not change: `let`.
+- If the value changes during the function: `mutable let`, only after
+  ruling out a rewrite that avoids mutation.
+- If the value is a module-level configuration shared across
+  functions: `const`.
+
+<Aside type="tip">
+In practice, most code never needs `mutable let`. Reassignment-free
+styles using pattern matching, `match`, `if` as an expression, and
+`fold` over collections cover most cases that would otherwise
+accumulate into a mutable variable.
+</Aside>

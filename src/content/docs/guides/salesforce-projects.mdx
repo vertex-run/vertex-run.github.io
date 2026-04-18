@@ -1,0 +1,223 @@
+---
+title: Building for Salesforce
+description: A worked example using SObjects, DML, @AuraEnabled, and sharing modifiers in one project.
+sidebar:
+  order: 6
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+This guide walks through building a small but realistic Salesforce
+feature in Vertex: a function that creates a new Account, tags it with
+a classification, and exposes the operation to a Lightning component.
+Along the way it pulls together every Salesforce-specific construct
+Vertex offers.
+
+Before you start, make sure your project is set up per
+[Your first Salesforce project](/getting-started/first-salesforce-project/).
+
+## Define the SObject
+
+```vertex
+// src/accounts/types.vtx
+@SObject
+pub type Account {
+    Account(
+        Name: String,
+        Industry: Option<String>,
+        Rating: Option<String>,
+    )
+}
+```
+
+Three things are happening here:
+
+1. `@SObject` tells the Apex codegen this type is an Account record.
+   Every `@SObject` type also gets an implicit `Id: Option<Id>` field.
+2. `Industry` and `Rating` are `Option<String>` so they can be omitted
+   at construction time: constructor fields of an `Option` type
+   default to `None`.
+3. `pub` exports the type from the module so other Vertex files can
+   import it.
+
+## Core business logic
+
+```vertex
+// src/accounts/classify.vtx
+import accounts.types
+
+type ClassifyError {
+    InsertFailed(reason: String)
+    MissingName
+}
+
+pub fn create_classified_account(
+    name: String,
+    industry: String,
+): Result<Id, ClassifyError> {
+    if name.trim() == "" {
+        Error(MissingName)
+    } else {
+        let acc = types.Account(
+            Name: name,
+            Industry: Some(industry),
+            Rating: Some(pick_rating(industry)),
+        )
+        match Database.insert(acc) {
+            Ok(id)        => Ok(id),
+            Error(dmlErr) => Error(InsertFailed(dmlErr.message)),
+        }
+    }
+}
+
+fn pick_rating(industry: String): String {
+    match industry {
+        "Technology" | "Healthcare" => "Hot",
+        "Retail"                   => "Warm",
+        _                          => "Cold",
+    }
+}
+```
+
+Notes on this file:
+
+- **Error types are explicit.** Callers know at compile time what can
+  go wrong.
+- **`Database.insert` returns `Result`.** We translate the generic
+  `DmlError` into our own domain error.
+- **`pick_rating` is private.** No `pub` means it is module-local.
+
+## Expose it to Lightning
+
+```vertex
+// src/accounts/aura.vtx
+import accounts.classify
+
+@AuraEnabled
+pub type ClassifyResult {
+    ClassifyResult(accountId: String, success: Bool)
+}
+
+@AuraEnabled
+pub fn classify_for_lwc(
+    name: String,
+    industry: String,
+): Result<ClassifyResult, AuraError> {
+    match classify.create_classified_account(name: name, industry: industry) {
+        Ok(id)                            => Ok(ClassifyResult(accountId: id.toString(), success: true)),
+        Error(classify.MissingName)       => Error(AuraError("Name is required")),
+        Error(classify.InsertFailed(msg)) => Error(AuraError("Could not save: ${msg}")),
+    }
+}
+```
+
+Notes:
+
+- **`@AuraEnabled` on the type** makes every field serializable to LWC.
+- **`@AuraEnabled` on the function** exposes it, and the return type
+  must be `Result<_, AuraError>`. `Ok` becomes the value passed to
+  LWC; `Error` becomes an `AuraHandledException` with your message.
+- **The boundary is narrow.** The rich `ClassifyError` lives inside
+  Vertex; the LWC sees only a single-line message.
+
+## Sharing and security
+
+By default, every Vertex module compiles to `public with sharing`, the
+safe Salesforce default. To opt into a different sharing mode, add an
+annotation at the top of the file:
+
+```vertex
+// src/accounts/admin_job.vtx
+@WithoutSharing
+
+import accounts.classify
+// ...
+```
+
+You almost never want this. Use it only when you have a specific
+reason (a scheduled job that needs to see all records) and audit the
+code accordingly.
+
+## Building and deploying
+
+From the project root:
+
+```
+$ vertex build
+Success! Built 3 class(es) to force-app/main/default/classes/
+```
+
+```
+$ sf project deploy start --target-org <alias>
+```
+
+`sf` tracks local changes on its own; do not pass `--source-dir` or
+`--metadata`.
+
+## Testing before deploying
+
+```vertex
+// src/accounts/classify_test.vtx
+import accounts.classify
+import accounts.types
+
+@Test
+fn rejects_blank_name(): Void {
+    let result = classify.create_classified_account(name: "   ", industry: "Retail")
+    let assert Error(classify.MissingName) = result
+}
+
+@Test
+fn returns_id_on_success(): Void {
+    let result = classify.create_classified_account(name: "Acme", industry: "Retail")
+    let assert Ok(_) = result
+}
+```
+
+Run:
+
+```
+$ vertex test
+✓ rejects blank name
+✓ returns id on success
+2 passed, 0 failed  (8ms)
+```
+
+The second test exercises `Database.insert` without a real org. In JIT
+mode, the DML layer is simulated and `Database.insert` returns a stub
+`Id`. The test verifies *your code* does the right thing; org-side
+behaviour is verified with an actual deploy.
+
+## Calling from LWC
+
+In your Lightning component:
+
+```javascript
+import classifyForLwc from '@salesforce/apex/Aura.vtx_classify_for_lwc';
+
+classifyForLwc({ name: 'Acme', industry: 'Retail' })
+    .then(result => { /* { accountId, success } */ })
+    .catch(error => { /* AuraHandledException message */ });
+```
+
+The Apex method name is `vtx_` + the Vertex function name.
+
+## What to remember
+
+1. **Keep domain logic in pure Vertex modules.** `@SObject` types and
+   `Database.*` calls are fine, but keep `@AuraEnabled` boundaries
+   thin.
+2. **Error types communicate the API contract.** Don't collapse them
+   to strings until you are exiting the Vertex world.
+3. **Test before you deploy.** The simulated DML layer covers most of
+   your code; a quick deploy covers the rest.
+4. **Default to `with sharing`.** Only change it with a reason.
+
+## See it in a real project
+
+[vertex-run/vertex-library-management](https://github.com/vertex-run/vertex-library-management)
+is a sample app that applies the patterns in this guide end to end:
+`@SObject` types, `Database.*` through `Result`, `@AuraEnabled`
+controllers, and a `domain/` module with tests that run on the JIT.
+Browse the source in
+[`src/`](https://github.com/vertex-run/vertex-library-management/tree/main/src).

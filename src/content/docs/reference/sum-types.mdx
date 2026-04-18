@@ -30,13 +30,13 @@ let c  = Circle(
 let c2 = Circle(
     5.0,
 )                      // positional (declaration order)
-let n  = North                            // unit variant — no parentheses
+let n  = North                            // unit variant. No parentheses
 ```
 
 Unit variants are referenced by name alone. Writing `North()` is a compile
-error — there is only one way to construct a unit variant.
+error. There is only one way to construct a unit variant.
 
-No type qualifier is needed — variant names are globally unique in a module.
+No type qualifier is needed. Variant names are globally unique in a module.
 
 ### Field access on known variants
 
@@ -63,11 +63,11 @@ type TicketBundle {
 }
 
 fn bundleAvailable(b: TicketBundle): Int {
-    b.available   // valid — all variants have 'available: Int'
+    b.available   // valid. All variants have 'available: Int'
 }
 
 fn bundlePrice(b: TicketBundle): Int {
-    b.price       // valid — all variants have 'price: Int'
+    b.price       // valid. All variants have 'price: Int'
 }
 ```
 

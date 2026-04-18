@@ -1,0 +1,45 @@
+---
+title: Guides
+description: Task-oriented how-to guides for common Vertex workflows.
+sidebar:
+  order: 1
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+The [Language Tour](/tour/01-hello-world/) and
+[Reference](/reference/) answer *what is in Vertex?*. This section
+answers *how do I do X?*.
+
+Each guide is self-contained and assumes you are comfortable with
+everything up to tour Chapter 8 (Option and Result).
+
+## In this section
+
+<CardGrid>
+  <Card title="Error handling with Result" icon="warning">
+    How to design fallible APIs, when to use `?`, and how to build up
+    error types that compose.
+    [Read more](/guides/error-handling/)
+  </Card>
+  <Card title="Pattern matching in practice" icon="puzzle">
+    Real patterns beyond the basics: guards, nested destructuring,
+    list patterns, and when to reach for `let assert`.
+    [Read more](/guides/pattern-matching/)
+  </Card>
+  <Card title="Testing your code" icon="approve-check">
+    Writing `@Test` functions, structuring test files, and using the
+    simulated DML layer to test Salesforce code without an org.
+    [Read more](/guides/testing/)
+  </Card>
+  <Card title="Interop with existing Apex" icon="random">
+    Calling Apex classes, wrapping the parts of `System.*` you need,
+    and handling values of type `Apex.Object`.
+    [Read more](/guides/apex-interop/)
+  </Card>
+  <Card title="Building for Salesforce" icon="rocket">
+    Putting it all together: `@SObject`, DML, `@AuraEnabled`, and
+    sharing modifiers in a single project.
+    [Read more](/guides/salesforce-projects/)
+  </Card>
+</CardGrid>

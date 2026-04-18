@@ -1,0 +1,48 @@
+---
+title: Salesforce
+description: SObjects, DML, AuraEnabled, Apex FFI, and the Apex.Object escape hatch.
+sidebar:
+  order: 1
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+Vertex is a Salesforce-first language. This section is the reference
+for everything that touches the Apex runtime: SObject types, DML,
+Lightning components, and calling into existing Apex code.
+
+## Reading order
+
+If you are new to the Salesforce side of Vertex, read these pages in
+order. Each one builds on the previous.
+
+1. **[Salesforce Integration](/reference/salesforce/integration/)**:
+   `@SObject` types, the `Database.*` DML API, and `@AuraEnabled`
+   functions and types. Start here for day-to-day Salesforce work.
+
+2. **[Apex FFI](/reference/salesforce/apex-ffi/)**: `extern type`,
+   `extern new`, `extern method`, `extern field`, and `extern enum`
+   for calling existing Apex code from Vertex. Read this when you need
+   to reuse Apex libraries or wrap `System.*` APIs.
+
+3. **[Apex.Object](/reference/salesforce/apex-object/)**: the escape
+   hatch for Apex's universal `Object` type. Read this when you are
+   working with dynamic Apex APIs that return or accept `Object`.
+
+## Related
+
+<CardGrid>
+  <Card title="Annotations" icon="seti:lock">
+    `@Test`, `@AuraEnabled`, `@SObject`, and sharing modifiers.
+    [Annotations reference](/reference/annotations/)
+  </Card>
+  <Card title="Testing" icon="approve-check">
+    `@Test`, the simulated DML layer, and running tests locally before
+    deploying.
+    [Testing reference](/reference/testing/)
+  </Card>
+  <Card title="Building for Salesforce" icon="rocket">
+    Task-oriented guide to building a complete Salesforce project.
+    [Guide: Building for Salesforce](/guides/salesforce-projects/)
+  </Card>
+</CardGrid>
