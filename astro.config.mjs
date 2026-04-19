@@ -149,6 +149,10 @@ export default defineConfig({
           label: "Examples",
           autogenerate: { directory: "examples" },
         },
+        {
+          label: "Changelog",
+          autogenerate: { directory: "changelog" },
+        },
       ],
       customCss: ["./src/styles/custom.css"],
       expressiveCode: {

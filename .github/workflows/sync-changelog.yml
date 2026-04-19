@@ -1,0 +1,78 @@
+name: Sync changelog from release
+
+on:
+  repository_dispatch:
+    types: [new-release]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Semver version (without the leading v), e.g. 0.2.0"
+        required: true
+      date:
+        description: "Release date in YYYY-MM-DD"
+        required: true
+      body:
+        description: "Markdown body to embed in the changelog page"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-changelog
+  cancel-in-progress: false
+
+jobs:
+  write:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write changelog entry
+        env:
+          VERSION: ${{ github.event.client_payload.version || inputs.version }}
+          DATE: ${{ github.event.client_payload.date || inputs.date }}
+          BODY: ${{ github.event.client_payload.body || inputs.body }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${VERSION}" || -z "${DATE}" ]]; then
+            echo "Missing VERSION or DATE input." >&2
+            exit 1
+          fi
+
+          mkdir -p src/content/docs/changelog
+          FILE="src/content/docs/changelog/v${VERSION}.mdx"
+
+          # Negative YYYYMMDD puts newer releases first in the Starlight sidebar.
+          ORDER="-$(echo "${DATE}" | tr -d '-')"
+
+          {
+            echo "---"
+            echo "title: \"v${VERSION}\""
+            echo "description: \"Released ${DATE}.\""
+            echo "slug: changelog/v${VERSION}"
+            echo "sidebar:"
+            echo "  order: ${ORDER}"
+            echo "---"
+            echo
+            echo "Released on **${DATE}**."
+            echo
+            printf '%s\n' "${BODY}"
+            echo
+            echo "[View on GitHub](https://github.com/vertex-run/vertex/releases/tag/v${VERSION})"
+          } > "${FILE}"
+
+      - name: Commit and push
+        env:
+          VERSION: ${{ github.event.client_payload.version || inputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name  "vertex-bot"
+          git config user.email "noreply@github.com"
+          git add src/content/docs/changelog/
+          if git diff --cached --quiet; then
+            echo "No changelog changes to commit for v${VERSION}."
+            exit 0
+          fi
+          git commit -m "changelog: add v${VERSION}"
+          git push
