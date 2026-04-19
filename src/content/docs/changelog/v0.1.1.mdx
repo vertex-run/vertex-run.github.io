@@ -1,0 +1,25 @@
+---
+title: "v0.1.1"
+description: "Released 2026-04-19."
+slug: changelog/v0.1.1
+sidebar:
+  order: -20260419
+---
+
+Released on **2026-04-19**.
+
+### Fixed
+- `vertex run` and `vertex build` no longer exit silently when a source file
+  contains an unterminated string literal or an unterminated `${...}`
+  interpolation.
+- Match expressions that bind the tail of a typed list with a rest pattern
+  (e.g. `[_, ...rest] => rest` on a `List<Int>`) now generate Apex that
+  compiles. Previously the generated code assigned a `List<Object>` to a
+  `List<T>` variable, which Salesforce rejected with `Illegal assignment from
+  List<Object> to List<T>`.
+- Positional bindings in match-expression arms now carry their element type
+  (e.g. `Integer` rather than `Object`), so patterns like
+  `match xs { [head] => head + 1, _ => 0 }` compile on Salesforce instead of
+  failing with `Arithmetic expressions must use numeric arguments`.
+
+[View on GitHub](https://github.com/vertex-run/vertex/releases/tag/v0.1.1)
