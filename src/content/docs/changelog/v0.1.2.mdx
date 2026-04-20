@@ -1,0 +1,17 @@
+---
+title: "v0.1.2"
+description: "Released 2026-04-20."
+slug: changelog/v0.1.2
+sidebar:
+  order: -1002
+---
+
+Released on **2026-04-20**.
+
+### Fixed
+- Generated `VtxClosure` classes for closures that capture no variables no
+  longer include a redundant empty constructor. Apex auto-supplies a default
+  no-arg constructor when none is declared, so emitting one was noise in the
+  generated output.
+
+[View on GitHub](https://github.com/vertex-run/vertex/releases/tag/v0.1.2)
