@@ -1,6 +1,6 @@
 ---
 title: The vertex CLI
-description: Command reference for vertex run, vertex test, vertex build, and vertex lsp.
+description: Command reference for vertex run, vertex test, vertex build, vertex check, vertex docs, and vertex lsp.
 sidebar:
   order: 2
 ---
@@ -21,6 +21,8 @@ vertex <command> [options]
 | `run`   | Run a `.vtx` file via JIT or on a Salesforce org          |
 | `test`  | Run `@Test` functions in `*_test.vtx` files               |
 | `build` | Compile `.vtx` files in the project to Apex class files   |
+| `check` | Parse and type-check a `.vtx` file without executing it   |
+| `docs`  | Browse the Vertex language reference offline              |
 | `lsp`   | Start the Language Server on stdio                        |
 
 Flags:
@@ -153,6 +155,92 @@ Then deploy with:
 ```
 $ sf project deploy start --target-org <alias>
 ```
+
+## `vertex check`
+
+```
+vertex check <file>
+```
+
+Parses, resolves imports, and type-checks a `.vtx` file, then exits. No
+code is generated, no program is executed. This is the fast feedback
+loop for editors and for LLM agents writing Vertex: the same Elm-style
+diagnostics as `vertex run`, minus the run step.
+
+Semantically it is to `vertex run` what `cargo check` is to `cargo run`.
+
+| Flag            | Effect                                              |
+|-----------------|-----------------------------------------------------|
+| `--no-color`    | Disable ANSI color in diagnostics.                  |
+| `--help`, `-h`  | Show help for this command.                         |
+
+**Exit codes.** `0` when the file is valid (warnings are printed but do
+not fail the command). `1` when any parse, import, or type error is
+reported.
+
+```
+$ vertex check src/billing/invoices.vtx
+$ echo $?
+0
+```
+
+```
+$ vertex check broken.vtx
+broken.vtx:3:14
+error[E100]: type mismatch: expected Int, found String
+ --> 3:14
+  |
+3 | let n: Int = "oops"
+                 ^
+$ echo $?
+1
+```
+
+The `file:line:col` header on the first line is deterministic, so an
+agent can parse diagnostics without regex-matching the colored body.
+
+## `vertex docs`
+
+```
+vertex docs                    # print the curated index
+vertex docs list               # one slug per line (machine-readable)
+vertex docs <topic>            # print a single reference page
+vertex docs full               # print the full concatenated reference
+vertex docs small              # print the compact reference (smaller context budget)
+vertex docs bnf                # print the formal grammar
+vertex docs search <query>     # substring search across every page
+```
+
+The full Vertex language reference, baked into the compiler binary. No
+network required. Useful both for humans at a terminal and for agents
+that want to feed a topic into a language model without a WebFetch
+round trip.
+
+Content is regenerated from this site on every release, so the output
+of `vertex docs` always matches the docs site as of the release the
+binary was cut from. Each command prints a footer with the source
+commit SHA so drift against [vertex-run.github.io](https://vertex-run.github.io)
+is visible.
+
+**Topic resolution.** Slugs match the URL paths on this site. A
+bare slug (`pattern-matching`) resolves to a unique full slug
+(`reference/pattern-matching`) when there is exactly one. When a slug
+is ambiguous (e.g. `pattern-matching` matches both
+`reference/pattern-matching` and `guides/pattern-matching`), the
+command lists the candidates and exits 1. Typos fall through to a
+fuzzy match with a "did you mean" suggestion.
+
+```
+$ vertex docs reference/stdlib/string
+$ vertex docs search 'exhaustive match'
+$ vertex docs list | grep stdlib
+```
+
+The web has the mirror artifacts at
+[vertex-run.github.io/llms.txt](https://vertex-run.github.io/llms.txt)
+and
+[vertex-run.github.io/llms-full.txt](https://vertex-run.github.io/llms-full.txt),
+produced by `starlight-llms-txt` per [llmstxt.org](https://llmstxt.org/).
 
 ## `vertex lsp`
 

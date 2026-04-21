@@ -2,6 +2,7 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import starlightCatppuccin from "@catppuccin/starlight";
+import starlightLlmsTxt from "starlight-llms-txt";
 import vertexGrammar from "./vertex.tmLanguage.json" with { type: "json" };
 
 export default defineConfig({
@@ -160,7 +161,29 @@ export default defineConfig({
           langs: [vertexGrammar],
         },
       },
-      plugins: [starlightCatppuccin()],
+      plugins: [
+        starlightCatppuccin(),
+        starlightLlmsTxt({
+          projectName: "Vertex",
+          description:
+            "Vertex is a programming language that targets the Salesforce platform. It transpiles to Apex and also runs locally via a JIT. The language prioritizes ergonomics and safety: errors are values (Result, Option), null does not exist, exceptions are not user-visible, and immutability is the default.",
+          details: [
+            "When writing Vertex, do not reach for Apex idioms by reflex. Common replacements:",
+            "- No `null`. Use `Option<T>` with `Some(x)` / `None`.",
+            "- No `try`/`catch` in user code. Fallible operations return `Result<T, E>`; use pattern matching.",
+            "- No class inheritance. Composition via interfaces only.",
+            "- No static methods. Module-level `fn` declarations instead.",
+            "- `type` is destructurable data; `class` is nominal with methods. No duck typing.",
+            "- `let` is immutable. Opt in to reassignment with `mutable let`.",
+            "",
+            "The file layout is one module per file with no explicit module declaration. Identifiers, types, and constructors follow the conventions shown in the reference pages.",
+          ].join("\n"),
+          promote: ["index*", "why-vertex*", "coming-from-apex*"],
+          demote: ["changelog/**"],
+          exclude: ["changelog/**"],
+          pageSeparator: "\n\n---\n\n",
+        }),
+      ],
     }),
   ],
 });
