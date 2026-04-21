@@ -1,0 +1,32 @@
+---
+title: "v0.2.0"
+description: "Released 2026-04-21."
+slug: changelog/v0.2.0
+sidebar:
+  order: -2000
+---
+
+Released on **2026-04-21**.
+
+### Added
+- `vertex docs` subcommand. Browse the full Vertex language reference offline,
+  straight from the compiler binary. Subcommands include `vertex docs` (the
+  curated index), `vertex docs list` (every topic slug, machine-readable),
+  `vertex docs <topic>` (a single reference page, with prefix and fuzzy
+  resolution), `vertex docs full` / `vertex docs small` (the complete and
+  compact bundles), `vertex docs bnf` (the formal grammar), and
+  `vertex docs search <query>` (substring search across every page).
+- `vertex check <file>` subcommand. Parses, resolves imports, and type-checks
+  a `.vtx` file without executing it. Exits 0 on success (warnings do not
+  fail the command) and 1 on any parse, import, or type error. Intended as
+  the fast feedback loop for editors and LLM agents, analogous to
+  `cargo check`.
+- LLM-friendly doc artifacts on [vertex-run.github.io](https://vertex-run.github.io):
+  [`/llms.txt`](https://vertex-run.github.io/llms.txt),
+  [`/llms-full.txt`](https://vertex-run.github.io/llms-full.txt), and
+  [`/llms-small.txt`](https://vertex-run.github.io/llms-small.txt), generated
+  per the [llmstxt.org](https://llmstxt.org/) convention. These are the same
+  artifacts the compiler bakes into its binary, so `vertex docs` and the
+  published site never disagree about what Vertex looks like.
+
+[View on GitHub](https://github.com/vertex-run/vertex/releases/tag/v0.2.0)
