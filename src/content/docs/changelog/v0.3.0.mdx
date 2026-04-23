@@ -1,0 +1,48 @@
+---
+title: "v0.3.0"
+description: "Released 2026-04-23."
+slug: changelog/v0.3.0
+sidebar:
+  order: -3000
+---
+
+Released on **2026-04-23**.
+
+### Added
+- Cross-module `pub const` imports. A `pub const` declared in one module can
+  now be brought into scope via `import m.{ NAME }` or accessed via a
+  qualifier (`import m` then `m.NAME`). The compiler inlines the folded
+  literal value at every use site in the importing module, so no Apex
+  cross-class field reference is emitted. Lists, maps, and sets are
+  supported alongside scalars.
+- Vertex project config file (`vertex.jsonc` or `vertex.json`) at the project
+  root. Fields: `src` (source directory), `out` (output directory, relative
+  to project root), `clean` (delete `.cls`/`.cls-meta.xml` in `out` before
+  writing). JSONC supports `//` and `/* */` comments plus trailing commas.
+  When both files exist, `vertex.jsonc` wins with a warning. Full schema and
+  defaults at [vertex-run.github.io/tooling/config](https://vertex-run.github.io/tooling/config/).
+- `vertex init` subcommand. Scaffolds a starter `vertex.jsonc` with the
+  recommended defaults and inline comments. Refuses to overwrite an
+  existing `vertex.jsonc` or `vertex.json`.
+
+### Changed
+- `vertex build` now requires a config file at the project root. Missing
+  file produces a hand-holding diagnostic pointing at `vertex init`. This
+  makes the output location always visible in-project rather than buried
+  in a compiler default.
+- Default output directory is now `force-app/main/vertex/classes` (what
+  `vertex init` writes) instead of `<packageDirectories[0].path>/main/default/classes`.
+  The `sfdx-project.json` `packageDirectories` entry is no longer used to
+  derive the output path. Users wiring a deploy should ensure a
+  `packageDirectories` entry covers the configured `out` path.
+- Default clean behavior flipped to `true`. Safe under the new default
+  output directory (Vertex-owned) and only deletes `.cls` /
+  `.cls-meta.xml` files, never unrelated files.
+
+### Removed
+- The `E162` "cross-module const imports are not yet supported" diagnostic.
+  Cross-module `pub const` is now a fully supported feature, not an error.
+- The `--src` flag on `vertex build`. Source directory is configured via
+  `"src"` in `vertex.jsonc`. Passing `--src` prints a hand-holding error.
+
+[View on GitHub](https://github.com/vertex-run/vertex/releases/tag/v0.3.0)
