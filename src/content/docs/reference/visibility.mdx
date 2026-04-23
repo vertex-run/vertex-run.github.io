@@ -1,0 +1,209 @@
+---
+title: Visibility
+description: Three-tier access modifiers (private, pub, global) for module-level declarations.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Every module-level declaration in Vertex has one of three access tiers.
+The tier controls where the declaration is visible: within its own module,
+across modules in the same Salesforce namespace, or across namespaces.
+
+```vertex
+fn helper(): Int { 42 }                // private (default)
+pub fn compute(): Int { helper() }     // visible to other modules in the same namespace
+global fn expose(): String { "hi" }    // visible across Salesforce namespaces
+```
+
+## The three tiers
+
+### `private` (default, no keyword)
+
+A declaration without an access modifier is private to the declaring module.
+Another module cannot import or reference it. This is the right tier for
+helpers, internal constants, and any type the module does not want to expose.
+
+```vertex
+fn helper(x: Int): Int { x * 2 }       // private
+const defaultRetries = 3               // private
+type InternalState { InternalState(n: Int) }  // private
+```
+
+### `pub`
+
+A `pub` declaration is importable by any other module in the same Salesforce
+namespace. Use it for the ordinary module API that your project consumes
+internally. A `pub fn` must carry an explicit return type (this keeps
+module boundaries self-documenting).
+
+```vertex
+pub fn findById(id: Id): Option<Account> { ... }
+pub const maxItems = 100
+pub type Invoice { Invoice(id: Id, amount: Decimal) }
+```
+
+### `global`
+
+A `global` declaration is visible across Salesforce namespaces. You need
+this tier when building APIs that subscribers of a managed package will
+consume, and for specific Apex surfaces that require `global` regardless
+of packaging, including:
+
+- `@RestResource` classes and the HTTP verb methods they dispatch to
+- `@InvocableMethod` static methods invoked from Flow or Process Builder
+  in subscriber orgs
+- `Batchable`, `Schedulable`, and `Queueable` classes that managed packages
+  expose to subscribers
+
+```vertex
+global const apiVersion = 1
+
+global fn ping(name: String): String {
+    "Hello, " + name + "!"
+}
+
+global type Payload {
+    Payload(name: String, amount: Decimal)
+}
+```
+
+`global` is more permissive than `pub`: anywhere a `pub` declaration can
+be imported, a `global` declaration works the same. The difference only
+shows up at Salesforce deploy time, where Apex enforces the cross-namespace
+rules described below.
+
+## Choosing a tier
+
+| You want to... | Use |
+|----------------|-----|
+| Hide a helper that only this module uses | (no keyword; private) |
+| Expose an API to other modules in your project | `pub` |
+| Build a `@RestResource`, `@InvocableMethod`, or managed-package API | `global` |
+
+If you are not publishing a managed package and do not need `@RestResource`
+or `@InvocableMethod`, you will rarely need `global`. Reach for `pub` first.
+
+## The generated Apex class
+
+Each Vertex module compiles to one Apex class, and the class's access tier
+is derived from its contents:
+
+- Every declaration is private or `pub`: `public with sharing class ...`
+- Any declaration is `global`: `global with sharing class ...`
+
+Individual methods retain their own tier inside the class. A module with
+a mix of `pub` and `global` functions emits a `global` outer class
+containing `public static` and `global static` methods side by side, which
+Apex allows.
+
+The sharing modifier composes with the access tier the same way it does
+for `pub` modules: `global with sharing class`, `global without sharing class`,
+and `global inherited sharing class` are all valid. See
+[Annotations](/reference/annotations/) for the sharing options.
+
+## `opaque` and `global`
+
+`opaque` can combine with either `pub` or `global`. A `global opaque type`
+is visible across namespaces but its constructors, fields, and variant
+patterns remain private to the declaring module, exactly like `pub opaque`.
+
+```vertex
+global opaque type Handle { Handle(id: Int) }
+
+global fn open(): Handle { Handle(id: 1) }
+```
+
+See [Opaque Types](/reference/opaque-types/) for the full encapsulation story.
+
+## Strict propagation
+
+Apex requires a `global` method's signature types to themselves be `global`.
+A `global` method that returns a `public` type fails to deploy with a
+"global method returns non-global type" error.
+
+Vertex lifts this rule into the compiler. Signature types referenced by a
+`global` declaration must themselves be global-accessible. What counts as
+global-accessible:
+
+- Built-in primitives: `String`, `Int`, `Long`, `Double`, `Decimal`, `Bool`,
+  `Id`, `Date`, `Datetime`, `Duration`, `Void`, `Apex.Object`
+- Built-in containers: `List<T>`, `Map<K, V>`, `Set<T>` (the container is
+  always global; the type arguments are checked recursively)
+- Any `extern` type (the declaring developer has vouched for the binding)
+- Any user-declared type marked `global`
+
+The rule applies to every signature position:
+
+- Parameter and return types of a `global fn`
+- Variant field types inside a `global type`
+- The resolved type of a `global const`
+- Type arguments at every concrete instantiation site
+
+Type aliases are walked to their concrete form; the alias's own tier does
+not matter, only what it resolves to.
+
+### Example
+
+```vertex
+global type Payload { Payload(name: String, amount: Decimal) }
+
+global fn emit(): Payload { Payload(name: "a", amount: 100.0d) }
+```
+
+Both types in the signature (`Payload`, the return type) are `global`.
+Compiles.
+
+```vertex
+pub type Invoice { Invoice(amount: Decimal) }
+
+global fn emit(): Invoice { Invoice(amount: 100.0d) }
+//                ^^^^^^^ E162: type 'Invoice' is not 'global'
+```
+
+Apex would reject this at deploy time. Vertex rejects it at compile time.
+Fix by marking `Invoice` as `global`, or by returning a different type.
+
+### `Option`, `Result`, and tuples are forbidden in `global` signatures
+
+`Option<T>`, `Result<T, E>`, and tuples emit as `public` inner classes of
+the Vertex stdlib helper class. They cannot cross namespace boundaries.
+
+```vertex
+global fn maybe(): Option<String> { Some("x") }
+//                ^^^^^^^^^^^^^^^ E165: 'Option' cannot appear in a global signature
+```
+
+To bridge a `global` API that conceptually returns an optional value,
+unwrap at the boundary or define a user-level `global type`:
+
+```vertex
+global type MaybeString {
+    Present(value: String),
+    Absent,
+}
+
+global fn maybe(): MaybeString { Present(value: "x") }
+```
+
+## `@IsTest` modules
+
+Apex test classes must be `private`. Because a `global` declaration would
+force the enclosing class to be `global`, a `global` declaration inside an
+`@IsTest` module is a hard contradiction and the compiler rejects it
+(`E166`). Move the declaration to a non-test module, or remove the
+`global` modifier.
+
+## Mutual exclusion
+
+`pub` and `global` occupy the same grammatical slot. Writing them together
+(`pub global fn`, `global pub fn`) is a parse error. Pick one.
+
+## Related error codes
+
+| Code   | Meaning                                                          |
+|--------|------------------------------------------------------------------|
+| `E162` | A `global fn` signature references a non-`global` user type      |
+| `E163` | A `global type` variant field references a non-`global` user type|
+| `E164` | A `global const`'s resolved type references a non-`global` user type |
+| `E165` | `Option<T>`, `Result<T, E>`, or a tuple appears in a `global` signature |
+| `E166` | A `global` declaration appears in an `@IsTest` module            |

@@ -172,6 +172,51 @@ A sharing annotation was called with parentheses or arguments.
 
 **To fix:** remove the arguments. Sharing annotations are bare.
 
+### `E162`: `global fn` signature references a non-`global` user type
+
+A `global` function exposes a parameter or return type that is not
+itself `global` (or extern, or a built-in primitive/container). Apex
+would reject this at deploy time; Vertex rejects it at compile time.
+
+**To fix:** mark the referenced type as `global`, or change the
+signature to use a global-accessible type. See
+[Visibility](/reference/visibility/) for the full rule set.
+
+### `E163`: `global type` variant field references a non-`global` user type
+
+A `global type` exposes a variant field whose declared type is not
+itself `global`. Every type reachable through a `global` type's public
+surface must be global too.
+
+**To fix:** mark the referenced type as `global`, or change the field's
+declared type.
+
+### `E164`: `global const` resolved type references a non-`global` user type
+
+A `global const`'s compile-time type references a user-defined type
+that is not `global`.
+
+**To fix:** mark the referenced type as `global`, or drop the `global`
+modifier on the constant.
+
+### `E165`: `Option`, `Result`, or tuple in a `global` signature
+
+`Option<T>`, `Result<T, E>`, and tuples emit as `public` inner classes
+of the Vertex stdlib helper class and cannot cross namespace
+boundaries. They are forbidden in any `global` signature position.
+
+**To fix:** unwrap the value at the boundary, or define a user-level
+`global type` that models the same shape.
+
+### `E166`: `global` declaration in an `@IsTest` module
+
+Apex test classes must be `private`, which directly contradicts a
+`global` declaration (which requires the enclosing class to be
+`global`).
+
+**To fix:** move the `global` declaration to a non-test module, or
+remove the `global` modifier.
+
 ### `E203`: Reassignment of `let`
 
 Deeper form of E101 with the original declaration's location as a

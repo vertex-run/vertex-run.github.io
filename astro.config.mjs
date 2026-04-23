@@ -96,6 +96,7 @@ export default defineConfig({
               label: "Modules",
               items: [
                 { label: "Imports", link: "/reference/imports/" },
+                { label: "Visibility", link: "/reference/visibility/" },
                 { label: "Annotations", link: "/reference/annotations/" },
               ],
             },

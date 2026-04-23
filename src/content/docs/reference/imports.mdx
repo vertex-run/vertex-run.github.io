@@ -109,8 +109,11 @@ if it lives under `src/`. Other modules cannot import the entry file.
 
 ## Visibility
 
-Only `pub` declarations are importable. Calling a non-`pub` symbol from
-another module is a compile error (`E124`).
+Only `pub` and `global` declarations are importable. Calling a private
+symbol from another module is a compile error (`E124`). For the full
+three-tier access model (private, `pub`, `global`), the Apex-class
+propagation rules, and the strict-propagation constraints on `global`
+signatures, see [Visibility](/reference/visibility/).
 
 ## Error codes
 

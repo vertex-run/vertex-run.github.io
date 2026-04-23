@@ -42,6 +42,24 @@ If two private functions with omitted return types reference each other (mutual
 recursion with both unannotated), the compiler emits **E136** and requires at
 least one of them to carry an explicit annotation.
 
+### Access tiers (`pub`, `global`)
+
+Functions can be private (default), `pub` (visible to other modules in the
+same Salesforce namespace), or `global` (visible across Salesforce
+namespaces, required for `@RestResource`, `@InvocableMethod`, and
+managed-package APIs). A `global fn` follows strict signature rules: every
+type in the signature must itself be global-accessible. See
+[Visibility](/reference/visibility/) for the full access model.
+
+```vertex
+fn helper(x: Int): Int { x * 2 }        // private
+pub fn compute(x: Int): Int { helper(x) }
+
+global fn ping(name: String): String {
+    "Hello, " + name + "!"
+}
+```
+
 ### Named arguments at the call site
 
 ```vertex

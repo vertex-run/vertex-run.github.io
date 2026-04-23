@@ -14,13 +14,21 @@ In Vertex, every `.vtx` file is a module. No explicit module declaration is need
 
 ## Visibility
 
-Declarations are private by default. Use `pub` to export:
+Declarations are private by default. Use `pub` to export to other modules
+in the same Salesforce namespace, and `global` for the cross-namespace
+tier required by `@RestResource`, `@InvocableMethod`, and managed-package
+APIs:
 
 ```vertex
 // accounts.vtx
-pub fn findById(id: String): Option<Account> { ... }  // exported
+pub fn findById(id: String): Option<Account> { ... }   // exported
 fn validate(a: Account): Bool { ... }                  // private
+
+global fn ping(): String { "pong" }                    // cross-namespace
 ```
+
+See the [Visibility reference](/reference/visibility/) for the full
+access model and the strict rules Apex enforces on `global` signatures.
 
 ## Import forms
 
@@ -97,5 +105,6 @@ full discovery rules and `--sf` preconditions.
 ## Next steps
 
 - [Imports reference](/reference/imports/): full spec including opaque type error codes
+- [Visibility reference](/reference/visibility/): the three-tier access model
 - [Constants reference](/reference/bindings/#constants), `pub const` for exported values
 - [Annotations](/reference/annotations/): controlling Apex sharing modifiers per module

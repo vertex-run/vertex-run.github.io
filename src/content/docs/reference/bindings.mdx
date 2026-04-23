@@ -135,12 +135,17 @@ const empty: List<String> = []
 
 ### Visibility
 
+Constants follow the same three-tier access model as functions and types:
+
 - **Private** (`const ...`): accessible within the same module only.
 - **Public** (`pub const ...`): exported in the module's signature
-  and accessible from other modules.
+  and accessible from other modules in the same namespace.
+- **Global** (`global const ...`): accessible across Salesforce
+  namespaces. Emits as `global final static ...`. See
+  [Visibility](/reference/visibility/).
 
-A `pub const` can be brought into scope via a selective import or
-accessed via a module qualifier:
+A `pub const` or `global const` can be brought into scope via a selective
+import or accessed via a module qualifier:
 
 ```vertex
 // config.vtx
@@ -162,7 +167,8 @@ emitted.
 
 ### Codegen
 
-- **Class-file Apex.** Emits as `[public|private] final static Type name = value;`.
+- **Class-file Apex.** Emits as `[public|private|global] final static Type name = value;`
+  depending on the access tier.
 - **Anonymous Apex.** Emits as `final Type name = value;` at the top
   of the block, before any body statements.
 
