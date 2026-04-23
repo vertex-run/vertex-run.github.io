@@ -1,0 +1,155 @@
+---
+title: Config file
+description: The vertex.jsonc / vertex.json project config file and its schema.
+sidebar:
+  order: 4
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Every Vertex project has a config file at the root: `vertex.jsonc`
+(preferred) or `vertex.json`. It is the single place to configure the
+source directory, the output directory, and whether the build cleans
+up stale generated files before writing new ones.
+
+`vertex build` requires the file. Run `vertex init` to scaffold one.
+
+## File format
+
+- **`vertex.jsonc`** is JSON with comments (`// line`, `/* block */`)
+  and trailing commas. Use this by default.
+- **`vertex.json`** is strict JSON. Use this if a tool you rely on
+  only understands standard JSON.
+
+When both files exist, `vertex.jsonc` wins and the build emits a
+warning telling you to remove one.
+
+## Schema
+
+The full schema is three fields, all optional:
+
+```jsonc
+{
+  // Directory containing .vtx source files, relative to project root.
+  "src": "src",
+  // Directory where generated .cls / .cls-meta.xml files are written,
+  // relative to project root. Ensure this path is covered by an entry
+  // in sfdx-project.json's packageDirectories if you want `sf deploy`
+  // to pick it up.
+  "out": "force-app/main/vertex/classes",
+  // When true, delete all .cls and .cls-meta.xml files from `out`
+  // before writing. When false, orphan files linger across builds.
+  "clean": true
+}
+```
+
+### Defaults
+
+If the file exists but a key is omitted, the build uses the default:
+
+| Field   | Default                           |
+|---------|-----------------------------------|
+| `src`   | `"src"`                           |
+| `out`   | `"force-app/main/vertex/classes"` |
+| `clean` | `true`                            |
+
+These are the same values `vertex init` writes out. An empty config
+(`{}`) is equivalent to a freshly scaffolded one.
+
+## Field details
+
+### `src`
+
+The directory containing `.vtx` source files, relative to the project
+root. Recursive: all `.vtx` files under this directory are compiled.
+
+### `out`
+
+The directory `.cls` and `.cls-meta.xml` files are written to,
+relative to the project root. You choose this path; Vertex does not
+derive it from `sfdx-project.json`. The default assumes the standard
+Salesforce DX layout with a `force-app/` package directory at the
+root.
+
+For `sf project deploy start` to pick up the generated files, ensure
+`out` sits inside a `packageDirectories` entry in `sfdx-project.json`.
+See [Project structure](/tooling/project-structure/) for example
+layouts.
+
+<Aside type="note">
+The default `out` uses `main/vertex/` rather than `main/default/` so
+Vertex-generated classes are isolated from any hand-written Apex
+under `main/default/`. This is what makes `"clean": true` safe by
+default.
+</Aside>
+
+### `clean`
+
+When `true`, the build deletes every `.cls` and `.cls-meta.xml` file
+directly inside `out` before writing new output. Unrelated files (any
+other extension, any subdirectory contents) are left untouched, so
+you cannot accidentally destroy non-Vertex files by pointing `out` at
+the wrong directory.
+
+When `false`, the build only writes and overwrites files it owns.
+Orphan `.cls` files from prior builds persist.
+
+## Examples
+
+### Default project
+
+Scaffolded by `vertex init`:
+
+```jsonc
+{
+  "src": "src",
+  "out": "force-app/main/vertex/classes",
+  "clean": true
+}
+```
+
+### Mixed hand-written Apex + Vertex
+
+Two package directories in `sfdx-project.json`, Vertex targets the
+second:
+
+```json
+{
+  "packageDirectories": [
+    { "path": "force-app", "default": true },
+    { "path": "force-app-vertex" }
+  ],
+  "sourceApiVersion": "66.0"
+}
+```
+
+```jsonc
+{
+  "out": "force-app-vertex/main/default/classes"
+}
+```
+
+### Non-destructive rebuild for debugging
+
+```jsonc
+{
+  "clean": false
+}
+```
+
+## Errors and warnings
+
+Everything diagnosed by the config loader follows the hand-holding
+style of the rest of Vertex's compiler.
+
+- **No config file found** — `vertex build` exits 1 with a message
+  pointing at `vertex init`.
+- **Malformed JSON / JSONC** — exits 1 with the byte offset of the
+  syntax error and a `help:` line.
+- **Wrong type for a field** (for example, `"clean": "yes"`) — exits 1
+  with the expected type named in `notes:`.
+- **Unknown top-level key** — warning, not an error. If the key is
+  close to a known one (`source` vs `src`) the warning suggests it
+  with "did you mean?".
+- **Both `vertex.jsonc` and `vertex.json` present** — warning. The
+  `.jsonc` file wins.

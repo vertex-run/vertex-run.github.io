@@ -7,23 +7,27 @@ sidebar:
 
 import { Aside } from '@astrojs/starlight/components';
 
-A "Vertex project" is any directory that contains an
-`sfdx-project.json` file. Vertex reuses the standard Salesforce project
-layout so the output of `vertex build` can be deployed with the `sf`
-CLI without extra config.
+A "Vertex project" is any directory that contains both
+`sfdx-project.json` and [`vertex.jsonc`](/tooling/config/) (or
+`vertex.json`) at the root. Vertex reuses the standard Salesforce
+project layout so the output of `vertex build` can be deployed with
+the `sf` CLI without extra config.
 
 ## The minimum
 
 ```
 my-project/
 ├── sfdx-project.json
+├── vertex.jsonc
 └── src/
     └── hello.vtx
 ```
 
-`sfdx-project.json` is the project marker. `src/` (the default) holds
-your Vertex source. You can choose a different source directory with
-`--src`.
+`sfdx-project.json` is the Salesforce project marker (Vertex reads
+`sourceApiVersion` from it). `vertex.jsonc` is the Vertex project
+marker and also configures the source directory, output directory, and
+clean behavior. Run `vertex init` to scaffold one with recommended
+defaults.
 
 `sfdx-project.json`:
 
@@ -36,16 +40,29 @@ your Vertex source. You can choose a different source directory with
 }
 ```
 
+`vertex.jsonc` (the defaults `vertex init` writes):
+
+```jsonc
+{
+  "src": "src",
+  "out": "force-app/main/vertex/classes",
+  "clean": true
+}
+```
+
+See [Config file](/tooling/config/) for the full schema and defaults.
+
 ## After `vertex build`
 
 ```
 my-project/
 ├── sfdx-project.json
+├── vertex.jsonc
 ├── src/
 │   └── hello.vtx
 └── force-app/
     └── main/
-        └── default/
+        └── vertex/
             └── classes/
                 ├── Hello.cls
                 └── Hello.cls-meta.xml
@@ -53,6 +70,12 @@ my-project/
 
 Each `.vtx` file produces one Apex class. The class name is the file
 name capitalized (`hello.vtx` becomes `Hello.cls`).
+
+The output lands under `main/vertex/classes/` rather than
+`main/default/classes/` to keep Vertex-generated Apex in its own
+metadata folder, isolated from any hand-written Apex under
+`main/default/`. This is why `"clean": true` is safe by default. You
+can change the output path via the `out` field in `vertex.jsonc`.
 
 ## Modules and imports
 
@@ -120,8 +143,26 @@ starting with an underscore.
 
 ## Where generated classes go
 
-`vertex build` writes to `force-app/main/default/classes/`. This is
-the directory `sf project deploy start` picks up by default.
+`vertex build` writes to whatever directory `out` in `vertex.jsonc`
+points at, relative to the project root. The default is
+`force-app/main/vertex/classes/`. For `sf project deploy start` to
+pick the output up, the path needs to be covered by a
+`packageDirectories` entry in `sfdx-project.json`. A standard
+Salesforce DX project with `force-app` as its first package directory
+has that covered automatically.
 
-If your `sfdx-project.json` specifies a different default package
-directory, the output still lands inside it under `main/default/classes/`.
+If you want Vertex output to live in its own package directory
+(separate from hand-written Apex), add it to `sfdx-project.json`:
+
+```json
+{
+  "packageDirectories": [
+    { "path": "force-app", "default": true },
+    { "path": "force-app-vertex" }
+  ],
+  "sourceApiVersion": "66.0"
+}
+```
+
+Then set `out` to `force-app-vertex/main/default/classes` in
+`vertex.jsonc`.

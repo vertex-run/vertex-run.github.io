@@ -1,6 +1,6 @@
 ---
 title: The vertex CLI
-description: Command reference for vertex run, vertex test, vertex build, vertex check, vertex docs, and vertex lsp.
+description: Command reference for vertex run, vertex test, vertex build, vertex check, vertex init, vertex docs, and vertex lsp.
 sidebar:
   order: 2
 ---
@@ -22,6 +22,7 @@ vertex <command> [options]
 | `test`  | Run `@Test` functions in `*_test.vtx` files               |
 | `build` | Compile `.vtx` files in the project to Apex class files   |
 | `check` | Parse and type-check a `.vtx` file without executing it   |
+| `init`  | Scaffold a `vertex.jsonc` with recommended defaults       |
 | `docs`  | Browse the Vertex language reference offline              |
 | `lsp`   | Start the Language Server on stdio                        |
 
@@ -135,19 +136,19 @@ vertex build [options]
 ```
 
 Compiles every `.vtx` file in the project's source directory to Apex
-class files. Writes the `.cls` + `.cls-meta.xml` pair for each file to
-`force-app/main/default/classes/`.
+class files. Source, output, and clean behavior are configured in
+[`vertex.jsonc`](/tooling/config/) at the project root. A config file
+is required; run `vertex init` to scaffold one.
 
-| Flag            | Effect                                     |
-|-----------------|--------------------------------------------|
-| `--src <dir>`   | Source directory (default: `src`).         |
-| `--help`, `-h`  | Show help for this command.                |
+| Flag            | Effect                         |
+|-----------------|--------------------------------|
+| `--help`, `-h`  | Show help for this command.    |
 
 Run from the project root:
 
 ```
 $ vertex build
-Success! Built 3 class(es) to force-app/main/default/classes/
+Success! Built 3 class(es) to /path/to/project/force-app/main/vertex/classes
 ```
 
 Then deploy with:
@@ -155,6 +156,26 @@ Then deploy with:
 ```
 $ sf project deploy start --target-org <alias>
 ```
+
+When no config file is present, `vertex build` exits 1 with a
+hand-holding error pointing at `vertex init`.
+
+## `vertex init`
+
+```
+vertex init
+```
+
+Scaffolds a starter `vertex.jsonc` in the current working directory
+with recommended defaults and inline comments. Refuses to overwrite an
+existing `vertex.jsonc` or `vertex.json`. Prints a non-fatal note if
+`sfdx-project.json` is missing.
+
+See [Config file](/tooling/config/) for the full schema.
+
+| Flag            | Effect                         |
+|-----------------|--------------------------------|
+| `--help`, `-h`  | Show help for this command.    |
 
 ## `vertex check`
 

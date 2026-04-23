@@ -137,10 +137,28 @@ const empty: List<String> = []
 
 - **Private** (`const ...`): accessible within the same module only.
 - **Public** (`pub const ...`): exported in the module's signature
-  and accessible via `module.name`.
+  and accessible from other modules.
 
-Selective import of a `pub const` by name is not yet supported. Use a
-bare `import foo` and qualify with `foo.constant`.
+A `pub const` can be brought into scope via a selective import or
+accessed via a module qualifier:
+
+```vertex
+// config.vtx
+pub const max_retries = 5
+pub const levels = [1, 2, 3]
+```
+
+```vertex
+// main.vtx
+import config.{ max_retries }   // selective: use `max_retries` bare
+import config                   // qualified: use `config.levels`
+
+pub fn run(): Int { max_retries + config.levels.size() }
+```
+
+In both cases the compiler inlines the folded literal value at every use
+site in the importing module, so no cross-class Apex field reference is
+emitted.
 
 ### Codegen
 

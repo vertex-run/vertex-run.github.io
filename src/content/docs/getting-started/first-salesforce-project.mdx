@@ -18,20 +18,22 @@ It assumes you have:
 
 ## Project layout
 
-A Vertex project is any directory containing an `sfdx-project.json`
-file. The file tells the Salesforce tooling where your Apex source
-lives; Vertex uses the same file to locate your Vertex source.
+A Vertex project has two config files at the root: `sfdx-project.json`
+(Salesforce's) and [`vertex.jsonc`](/tooling/config/) (Vertex's). The
+first tells the Salesforce tooling where your Apex source lives; the
+second configures the Vertex build.
 
 The conventional layout:
 
 ```
 my-project/
 ├── sfdx-project.json
+├── vertex.jsonc
 ├── src/                          # .vtx source goes here
 │   └── hello.vtx
 └── force-app/
     └── main/
-        └── default/
+        └── vertex/
             └── classes/          # vertex build writes .cls files here
 ```
 
@@ -43,6 +45,23 @@ A minimal `sfdx-project.json`:
     { "path": "force-app", "default": true }
   ],
   "sourceApiVersion": "66.0"
+}
+```
+
+Scaffold `vertex.jsonc` from the project root:
+
+```
+$ vertex init
+Created vertex.jsonc. Edit it to customize your build.
+```
+
+That writes the recommended defaults:
+
+```jsonc
+{
+  "src": "src",
+  "out": "force-app/main/vertex/classes",
+  "clean": true
 }
 ```
 
@@ -66,10 +85,10 @@ From the project root:
 
 ```
 $ vertex build
-Success! Built 1 class(es) to force-app/main/default/classes/
+Success! Built 1 class(es) to /path/to/my-project/force-app/main/vertex/classes
 ```
 
-Look inside `force-app/main/default/classes/` and you will see a
+Look inside `force-app/main/vertex/classes/` and you will see a
 `.cls` file and a `.cls-meta.xml` file ready for deployment.
 
 ## Deploy
