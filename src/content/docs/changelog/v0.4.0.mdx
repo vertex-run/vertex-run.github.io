@@ -1,0 +1,37 @@
+---
+title: "v0.4.0"
+description: "Released 2026-04-24."
+slug: changelog/v0.4.0
+sidebar:
+  order: -4000
+---
+
+Released on **2026-04-24**.
+
+### Added
+- `global` access modifier for cross-namespace visibility. A third tier
+  alongside private (default) and `pub`, `global` emits the Apex `global`
+  keyword required by managed-package APIs, `@RestResource` classes,
+  `@InvocableMethod` methods used in subscribers, and
+  `Batchable`/`Schedulable`/`Queueable` classes exposed cross-namespace.
+  Applies to `fn`, `type`, `opaque type`, and `const` declarations. When
+  any declaration in a module is `global`, the generated outer Apex class
+  is emitted as `global` too. Composes with the sharing annotations:
+  `global with sharing class`, `global without sharing class`, and
+  `global inherited sharing class` are all valid. Full reference at
+  [vertex-run.github.io/reference/visibility](https://vertex-run.github.io/reference/visibility/).
+- REST resources as a first-class language feature. A `.vtx` file
+  annotated with `@RestResource(urlMapping: "/...")` at module level
+  becomes a Salesforce custom Apex REST endpoint. Handler functions use
+  `@Get`, `@Post`, `@Put`, `@Patch`, and `@Delete` with an optional path
+  suffix: `@Get("/{accountId}")` binds the captured segment to a
+  same-named `String` parameter on the handler. Handlers have the shape
+  `fn(req: Request, <captures: String>...): Response`; return a
+  `Response` value built with factory functions like
+  `Response.ok(body: x)`, `Response.text(status: 200, body: "...")`,
+  `Response.no_content()`. A single module supports multiple handlers
+  per verb, dispatched at runtime by path-pattern specificity
+  (literal segments beat captures). Full reference at
+  [vertex-run.github.io/reference/salesforce/rest-resources](https://vertex-run.github.io/reference/salesforce/rest-resources/).
+
+[View on GitHub](https://github.com/vertex-run/vertex/releases/tag/v0.4.0)
