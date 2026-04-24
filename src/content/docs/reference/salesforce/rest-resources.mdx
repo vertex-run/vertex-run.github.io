@@ -1,0 +1,281 @@
+---
+title: REST Resources
+description: Declarative REST APIs in Vertex — @RestResource, HTTP verb handlers, path captures, typed Response values, and multi-handler dispatch.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Vertex exposes Salesforce's custom Apex REST API feature as a first-class
+language construct. A single `.vtx` file becomes a REST resource: the module
+declares a URL with `@RestResource`, and each handler function declares its
+verb with `@Get`, `@Post`, `@Put`, `@Patch`, or `@Delete`. Handlers take a
+`Request` and return a `Response`; path captures bind directly to function
+parameters.
+
+Here is a full CRUD resource:
+
+```vertex
+@RestResource(urlMapping: "/vertex/accounts")
+
+import vertex.http.{Request, Response}
+
+@Get
+fn list_all(req: Request): Response {
+    Response.text(status: 200, body: "accounts list")
+}
+
+@Get("/{accountId}")
+fn show(req: Request, accountId: String): Response {
+    Response.text(status: 200, body: "account " + accountId)
+}
+
+@Post
+fn create(req: Request): Response {
+    Response.text(status: 201, body: "account created")
+}
+
+@Put("/{accountId}")
+fn replace(req: Request, accountId: String): Response {
+    Response.text(status: 200, body: "replaced " + accountId)
+}
+
+@Delete("/{accountId}")
+fn remove(req: Request, accountId: String): Response {
+    Response.no_content()
+}
+```
+
+Deployed to Salesforce, this exposes `/services/apexrest/vertex/accounts`
+and `/services/apexrest/vertex/accounts/{accountId}` to HTTP clients
+authenticated against the org.
+
+## Module layout
+
+Every REST resource is **one `.vtx` file**. The file carries a single
+module-level `@RestResource` annotation followed by the handler functions:
+
+```vertex
+@RestResource(urlMapping: "/vertex/accounts")
+
+import vertex.http.{Request, Response}
+
+// ... handlers below
+```
+
+- `urlMapping` is a named string argument, required. The path starts with
+  `/` and must not contain `*` (the Apex-layer wildcard is appended at
+  codegen).
+- One file, one URL. Nested paths under that URL are handled by
+  per-handler path suffixes (see below), not by separate files.
+
+## `Request` and `Response`
+
+`Request` and `Response` are built-in types in the `vertex.http` stdlib
+module. Unlike `List`, `Map`, and other always-in-scope built-ins, these
+two require an explicit import:
+
+```vertex
+import vertex.http.{Request, Response}
+```
+
+The names `Request` and `Response` are too common to reserve globally;
+requiring an import keeps them free in modules that do not opt into REST.
+
+### `Request`
+
+Read-only view of the incoming HTTP request. Handlers receive a `Request`
+as their first parameter.
+
+```
+req.http_method() : String            // "GET", "POST", ...
+req.path() : String                   // the full request URI
+```
+
+### `Response`
+
+An immutable value built through factory functions. Handlers return a
+`Response`. Factories:
+
+```
+Response.ok(body: a) : Response                   // 200 application/json
+Response.created(body: a) : Response              // 201 application/json
+Response.bad_request(body: a) : Response          // 400 application/json
+Response.unauthorized(body: a) : Response         // 401
+Response.forbidden(body: a) : Response            // 403
+Response.unprocessable(body: a) : Response        // 422
+Response.status(code: Int, body: a) : Response    // arbitrary status, JSON
+
+Response.no_content() : Response                  // 204, no body
+Response.not_found() : Response                   // 404, no body
+
+Response.text(status: Int, body: String) : Response
+Response.text_bad_request(body: String) : Response
+Response.text_not_found(body: String) : Response
+```
+
+Instance builders return a new `Response`:
+
+```vertex
+Response.ok(body: user).with_header(name: "X-Trace", value: trace_id)
+Response.ok(body: user).with_content_type(value: "application/vnd.api+json")
+```
+
+JSON is the default content type. `Response.ok(body: a)` serializes `a`
+to JSON and sets `Content-Type: application/json`. Use `Response.text(...)`
+or `Response.bytes(...)` (coming soon) when you need a different content
+type.
+
+## HTTP verb annotations
+
+One handler per verb-path pair. The five verb annotations each take an
+optional string argument: the path suffix relative to the module's
+`urlMapping`.
+
+```vertex
+@Get
+fn list_all(req: Request): Response { ... }                 // matches /vertex/accounts
+
+@Get("/{accountId}")
+fn show(req: Request, accountId: String): Response { ... }  // matches /vertex/accounts/{id}
+
+@Get("/{accountId}/contacts/{contactId}")
+fn contact(req: Request, accountId: String, contactId: String): Response { ... }
+```
+
+### Handler signature rules
+
+Every REST handler must match the shape:
+
+```
+fn(req: Request, <captures: String>...): Response
+```
+
+- First parameter is `Request`.
+- Return type is `Response` (explicitly declared).
+- Any additional parameters are `String` and correspond to `{capture}`
+  segments in the path pattern.
+
+### Path captures
+
+Each `{name}` in a verb annotation's path suffix binds to a same-named
+handler parameter by position. Capture values are always `String` — Vertex
+intentionally does not auto-convert path segments. If you need an `Int`
+or `Id`, parse it explicitly with `Int.parse(...)` / `Id.from(...)` and
+handle the `None`/`Err` case yourself:
+
+```vertex
+@Get("/{accountId}")
+fn show(req: Request, accountId: String): Response {
+    match Int.parse(accountId) {
+        None    => Response.bad_request(body: "accountId must be an integer")
+        Some(n) => Response.ok(body: n)
+    }
+}
+```
+
+No hidden 400s — what can go wrong shows up in the handler's code.
+
+## Multi-handler dispatch
+
+A single REST module can have many handlers for the same verb, as long
+as their path patterns differ. Vertex dispatches to the most-specific
+matching handler at runtime:
+
+```vertex
+@Get                            // matches /vertex/accounts
+fn list_all(req: Request): Response { ... }
+
+@Get("/active")                 // matches /vertex/accounts/active (literal wins)
+fn list_active(req: Request): Response { ... }
+
+@Get("/{accountId}")            // matches /vertex/accounts/anything-else
+fn show(req: Request, accountId: String): Response { ... }
+```
+
+Specificity order:
+
+1. The empty-pattern handler (root URL) matches first.
+2. More literal segments beats fewer literal segments.
+3. Fewer `{capture}` segments beats more.
+4. Ties fall back to declaration order.
+
+Two handlers on the same verb whose patterns would match the same
+concrete URI are a compile-time error (E175). Unmatched paths fall
+through to a `404 Not Found`.
+
+## Handler visibility
+
+REST handlers follow Vertex's normal access rules, with one restriction:
+they cannot be `global`. Declare them private (`fn`) for module-local
+handlers or `pub fn` when another module needs to call them directly
+(e.g. from a test):
+
+```vertex
+fn show(req: Request, accountId: String): Response { ... }       // private
+pub fn show(req: Request, accountId: String): Response { ... }   // cross-module
+```
+
+`global fn show(...)` is rejected by the checker (E165). REST handlers
+are internal implementation details of the resource; the public
+cross-namespace surface is the HTTP endpoint itself, not the handler
+function.
+
+<Aside>
+The enclosing Apex class is always emitted as `global with sharing` when
+`@RestResource` is present — Apex REST requires the class and its
+`@HttpXxx` methods to be `global`. Sharing defaults to `with sharing`;
+override with the standard `@WithoutSharing` or `@InheritedSharing`
+module-level annotations.
+</Aside>
+
+## Error handling
+
+Two layers:
+
+1. **Application errors.** Return the appropriate `Response.*` directly.
+   `Response.bad_request(body: ...)`, `Response.not_found()`,
+   `Response.status(code: 422, body: ...)` — whatever the handler decides.
+
+2. **Uncaught exceptions.** Any exception that escapes a handler produces
+   a structured `500 Internal Server Error` response instead of
+   Salesforce's default behaviour of leaking the Apex stack trace in the
+   body.
+
+## URL mapping shape
+
+Vertex writes the base URL, the compiler appends the wildcard at codegen:
+
+| You write                                            | Emitted Apex                                     |
+|------------------------------------------------------|--------------------------------------------------|
+| `@RestResource(urlMapping: "/vertex/accounts")`      | `@RestResource(urlMapping='/vertex/accounts/*')` |
+
+Including `/` or `*` in your Vertex source is an error (E173). Use
+per-verb path suffixes (`@Get("/{id}")`) for nested URLs.
+
+## Running locally
+
+REST resources are inherently Salesforce-only — the `RestContext`
+singleton and the REST dispatcher only exist on the platform. A
+`@RestResource` module cannot be executed via `vertex run`; attempting
+to do so produces error E179 with a pointer to `vertex build` +
+`sf project deploy start`.
+
+Exercising a deployed REST resource from anonymous Apex is possible by
+synthesizing a `RestContext.request` and calling the emitted `doGet()` /
+`doPost()` / etc. wrappers directly. See the `examples/real-project`
+directory in the Vertex distribution for a complete working example.
+
+## Diagnostics
+
+| Code | Meaning                                                               |
+|------|-----------------------------------------------------------------------|
+| E165 | `Request` or `Response` used in a `global` signature.                 |
+| E170 | `@RestResource` missing or malformed `urlMapping`.                    |
+| E171 | Handler signature does not match `fn(Request, <String>...): Response`. |
+| E172 | `@Get` / `@Post` / etc. outside a `@RestResource` module.             |
+| E173 | `urlMapping` contains `*` or does not start with `/`.                  |
+| E174 | Malformed path pattern in a verb annotation.                           |
+| E175 | Two handlers on the same verb match the same concrete URI.            |
+| E176 | Path captures and handler parameters do not align.                     |
+| E178 | `@RestResource` module has no handlers.                               |
+| E179 | `vertex run` on a `@RestResource` module.                             |

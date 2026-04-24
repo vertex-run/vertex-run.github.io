@@ -122,3 +122,29 @@ public class BookDto {
     }
 }
 ```
+
+## `@RestResource` and verb annotations
+
+`@RestResource(urlMapping: "/path")` at the top of a `.vtx` file marks
+the module as a REST resource. Inside that module, `@Get`, `@Post`,
+`@Put`, `@Patch`, and `@Delete` each take an optional path suffix and
+mark a function as the handler for that verb-path pair:
+
+```vertex
+@RestResource(urlMapping: "/accounts")
+
+import vertex.http.{Request, Response}
+
+@Get
+fn list_all(req: Request): Response { Response.no_content() }
+
+@Get("/{accountId}")
+fn show(req: Request, accountId: String): Response {
+    Response.text(status: 200, body: "account " + accountId)
+}
+```
+
+See the [REST Resources reference](/reference/salesforce/rest-resources/)
+for the full specification: signature rules, path captures, multi-handler
+dispatch, error handling, and diagnostics.
+

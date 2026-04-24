@@ -116,6 +116,10 @@ export default defineConfig({
                 },
                 { label: "Apex FFI", link: "/reference/salesforce/apex-ffi/" },
                 { label: "Apex.Object", link: "/reference/salesforce/apex-object/" },
+                {
+                  label: "REST Resources",
+                  link: "/reference/salesforce/rest-resources/",
+                },
               ],
             },
             {

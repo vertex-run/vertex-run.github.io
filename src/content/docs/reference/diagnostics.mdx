@@ -199,14 +199,17 @@ that is not `global`.
 **To fix:** mark the referenced type as `global`, or drop the `global`
 modifier on the constant.
 
-### `E165`: `Option`, `Result`, or tuple in a `global` signature
+### `E165`: `Option`, `Result`, tuple, `Request`, or `Response` in a `global` signature
 
-`Option<T>`, `Result<T, E>`, and tuples emit as `public` inner classes
-of the Vertex stdlib helper class and cannot cross namespace
-boundaries. They are forbidden in any `global` signature position.
+`Option<T>`, `Result<T, E>`, tuples, and the `vertex.http` types
+`Request` / `Response` emit as `public` inner classes (or are part of
+the `public` Vtx_Http runtime) and cannot cross namespace boundaries.
+They are forbidden in any `global` signature position.
 
 **To fix:** unwrap the value at the boundary, or define a user-level
-`global type` that models the same shape.
+`global type` that models the same shape. For REST handlers
+specifically, use `fn` or `pub fn` rather than `global fn` — the
+enclosing `@RestResource` class is already auto-promoted to `global`.
 
 ### `E166`: `global` declaration in an `@IsTest` module
 
@@ -216,6 +219,85 @@ Apex test classes must be `private`, which directly contradicts a
 
 **To fix:** move the `global` declaration to a non-test module, or
 remove the `global` modifier.
+
+### `E170`: `@RestResource` missing or malformed `urlMapping`
+
+`@RestResource` requires a `urlMapping:` named argument whose value is
+a string literal.
+
+**To fix:** write `@RestResource(urlMapping: "/path")` with a
+string-literal path.
+
+### `E171`: REST handler signature is invalid
+
+`@Get`/`@Post`/`@Put`/`@Patch`/`@Delete` handlers must have the shape
+`fn(req: Request, <captures: String>...): Response` — first parameter
+is `Request`, return type is explicitly `Response`, and any additional
+parameters are `String`.
+
+**To fix:** adjust the handler's signature to match the rule. Import
+`Request` and `Response` from `vertex.http`.
+
+### `E172`: Verb annotation outside a `@RestResource` module
+
+`@Get`/`@Post`/etc. are only valid inside a module marked with
+`@RestResource(urlMapping: "/...")`.
+
+**To fix:** add `@RestResource(urlMapping: "/your-path")` at the top
+of the file, or remove the verb annotation.
+
+### `E173`: Invalid `urlMapping` shape
+
+The `urlMapping` argument must start with `/`, must not be empty, and
+must not contain `*` — Vertex appends the Apex wildcard at codegen.
+
+**To fix:** use `@RestResource(urlMapping: "/base/path")` without a
+trailing `*`. Add per-verb path suffixes like `@Get("/{id}")` for
+nested URLs.
+
+### `E174`: Malformed path pattern in a verb annotation
+
+The optional path-suffix argument on `@Get`/etc. must start with `/`,
+must not contain `*`, and must have balanced `{name}` captures with
+valid identifier-style names.
+
+**To fix:** rewrite the pattern. Examples:
+`@Get("/{id}")`, `@Get("/{id}/contacts/{contactId}")`, `@Get("/active")`.
+
+### `E175`: Pattern conflict within a verb
+
+Two handlers on the same verb cannot both match the same concrete URI.
+Patterns conflict when they have the same number of segments AND the
+same literal-vs-capture shape at every position.
+
+**To fix:** make one pattern more specific by adding a literal
+segment, or remove the duplicate handler.
+
+### `E176`: Path captures and handler parameters do not align
+
+Every `{name}` capture in a verb annotation must correspond to a
+same-named `String` parameter on the handler function, in declaration
+order.
+
+**To fix:** rename the handler parameter to match the capture, or
+rename the capture to match the parameter.
+
+### `E178`: `@RestResource` module has no handlers
+
+A module annotated with `@RestResource(urlMapping: "/...")` must
+declare at least one handler function marked with a verb annotation.
+
+**To fix:** add an `@Get`/`@Post`/etc. handler, or remove the
+`@RestResource` annotation.
+
+### `E179`: Cannot run a `@RestResource` module locally
+
+REST resources are dispatched by the Salesforce REST framework — there
+is no local execution surface. `vertex run` is not a meaningful
+command for a `@RestResource` module.
+
+**To fix:** deploy the module with `vertex build` +
+`sf project deploy start`, then invoke the endpoint over HTTP.
 
 ### `E203`: Reassignment of `let`
 
