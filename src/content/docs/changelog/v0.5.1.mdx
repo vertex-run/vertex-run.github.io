@@ -1,0 +1,18 @@
+---
+title: "v0.5.1"
+description: "Released 2026-08-19."
+slug: changelog/v0.5.1
+sidebar:
+  order: -5001
+---
+
+Released on **2026-08-19**.
+
+### Fixed
+- `vertex test` reported `no Vertex project found` when a project's
+  `vertex.jsonc` could not be parsed. An unreadable config falls back to the
+  default source directory, which a project that configured another name does
+  not have, and the missing directory shadowed the reason it was missing. The
+  parse error is now reported instead.
+
+[View on GitHub](https://github.com/vertex-run/vertex/releases/tag/v0.5.1)
