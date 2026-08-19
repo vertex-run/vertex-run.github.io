@@ -1,0 +1,28 @@
+---
+title: "v0.5.0"
+description: "Released 2026-08-19."
+slug: changelog/v0.5.0
+sidebar:
+  order: -5000
+---
+
+Released on **2026-08-19**.
+
+### Fixed
+- `vertex run`, `vertex test`, `vertex check` and the language server now read
+  the source directory from `"src"` in `vertex.jsonc`. Previously only
+  `vertex build` did, so a project that configured any directory other than
+  `src` built correctly and then failed everything else with
+  `found sfdx-project.json at <path> but <path>/src does not exist` — naming a
+  path the user had never configured. The language server was affected too, and
+  silently: a project with a configured `src` got no cross-file resolution, no
+  completions and no go-to-definition, with no error to explain why.
+
+### Removed
+- The `--src` flag on `vertex test`. The source directory is configured via
+  `"src"` in `vertex.jsonc`, the same as every other command. Passing `--src`
+  prints a hand-holding error. The flag never worked for a directory other than
+  `src` in any case: the discovery root honoured it, and module loading then
+  re-derived `<projectRoot>/src` underneath.
+
+[View on GitHub](https://github.com/vertex-run/vertex/releases/tag/v0.5.0)
