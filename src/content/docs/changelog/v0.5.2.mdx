@@ -1,0 +1,27 @@
+---
+title: "v0.5.2"
+description: "Released 2026-08-19."
+slug: changelog/v0.5.2
+sidebar:
+  order: -5002
+---
+
+Released on **2026-08-19**.
+
+### Fixed
+- A `match` or `if let` subject was rendered into every arm's test and into
+  each arm's bindings, so the generated Apex evaluated it once per arm while
+  the interpreter evaluates it once. For a pure function that was wasted CPU
+  under a governor limit; for anything that does not return the same value
+  twice — `Limits.getCpuTime()`, an extern with an effect — the arms tested
+  different values, and local and org runs disagreed about the program. The
+  subject is now bound once wherever a match is lowered to statements:
+  statement, return, `let` value, block trailing expression, `if` branch, and
+  `if let`. A match in an argument or an operand is unchanged for now, because
+  lifting it out would run it before anything to its left.
+- `if let` on a `Database.*` subject generated Apex that could not be deployed.
+  It never received the DML preparation `match` had, so the record was inserted
+  once per arm and the raw `Database.SaveResult` was tested as though it were a
+  `Result`. Both constructs now prepare a subject the same way.
+
+[View on GitHub](https://github.com/vertex-run/vertex/releases/tag/v0.5.2)
