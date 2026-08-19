@@ -14,6 +14,11 @@ up stale generated files before writing new ones.
 
 `vertex build` requires the file. Run `vertex init` to scaffold one.
 
+The other commands do not require it — `vertex run`, `vertex test`,
+`vertex check` and the language server fall back to the default `src`
+directory when a project has no config file. When the file *is* present,
+every command reads `src` from it.
+
 ## File format
 
 - **`vertex.jsonc`** is JSON with comments (`// line`, `/* block */`)
@@ -62,6 +67,11 @@ These are the same values `vertex init` writes out. An empty config
 
 The directory containing `.vtx` source files, relative to the project
 root. Recursive: all `.vtx` files under this directory are compiled.
+
+`src` governs every command, not just the build. `vertex run` resolves
+imports against it, `vertex test` discovers `*_test.vtx` files under it,
+`vertex check` resolves modules through it, and the language server roots
+its cross-file index there.
 
 ### `out`
 

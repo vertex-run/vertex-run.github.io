@@ -7,11 +7,12 @@ sidebar:
 
 import { Aside } from '@astrojs/starlight/components';
 
-A "Vertex project" is any directory that contains both
-`sfdx-project.json` and [`vertex.jsonc`](/tooling/config/) (or
-`vertex.json`) at the root. Vertex reuses the standard Salesforce
-project layout so the output of `vertex build` can be deployed with
-the `sf` CLI without extra config.
+A "Vertex project" is any directory that contains `sfdx-project.json` at
+the root, alongside a [`vertex.jsonc`](/tooling/config/) (or
+`vertex.json`) that `vertex build` requires and the other commands read
+when it is there. Vertex reuses the standard Salesforce project layout so
+the output of `vertex build` can be deployed with the `sf` CLI without
+extra config.
 
 ## The minimum
 
