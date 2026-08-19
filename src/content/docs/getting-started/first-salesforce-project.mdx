@@ -77,7 +77,9 @@ pub fn run(): Void {
 ```
 
 This compiles to a `public static void vtx_run()` method on a generated
-Apex class.
+Apex class. The `vtx_` prefix is there because `run` is an Apex reserved
+word; ordinary function names carry over unchanged. See
+[Apex class and method names](/tooling/project-structure/#apex-class-and-method-names).
 
 ## Build
 

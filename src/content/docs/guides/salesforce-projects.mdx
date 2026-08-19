@@ -193,14 +193,17 @@ behaviour is verified with an actual deploy.
 In your Lightning component:
 
 ```javascript
-import classifyForLwc from '@salesforce/apex/Aura.vtx_classify_for_lwc';
+import classifyForLwc from '@salesforce/apex/Accounts_Aura.classify_for_lwc';
 
 classifyForLwc({ name: 'Acme', industry: 'Retail' })
     .then(result => { /* { accountId, success } */ })
     .catch(error => { /* AuraHandledException message */ });
 ```
 
-The Apex method name is `vtx_` + the Vertex function name.
+The class name comes from the module path — `src/accounts/aura.vtx`
+generates `Accounts_Aura` — and the method keeps the Vertex function
+name. See
+[Apex class and method names](/tooling/project-structure/#apex-class-and-method-names).
 
 ## What to remember
 

@@ -122,8 +122,8 @@ remains testable without an org.
 ## Two-way interop
 
 Vertex-generated Apex classes can be called from existing Apex code.
-`pub fn` declarations become `public static` methods with a `vtx_`
-prefix on the generated class.
+`pub fn` declarations become `public static` methods on the generated
+class, under the same name.
 
 ```vertex
 // greet.vtx
@@ -135,11 +135,21 @@ pub fn say_hello(name: String): String {
 From Apex:
 
 ```apex
-String greeting = Greet.vtx_say_hello('Alice');
+String greeting = Greet.say_hello('Alice');
 ```
 
 This is how a team adopts Vertex incrementally: new code is Vertex;
-existing Apex callers reach in through the generated API.
+existing Apex callers reach in through the generated API. Because the
+names carry over unchanged, replacing an Apex class with a Vertex module
+of the same name leaves its callers untouched.
+
+<Aside type="note">
+A name is rewritten only when Apex would reject it: an identifier that
+collides with an Apex reserved word, or one that starts with `_`, is
+prefixed with `vtx_`. So `pub fn run()` becomes `vtx_run()` — `run` is
+reserved — while `say_hello` stays `say_hello`. See
+[Apex class names](/tooling/project-structure/#apex-class-and-method-names).
+</Aside>
 
 ## Checklist
 
