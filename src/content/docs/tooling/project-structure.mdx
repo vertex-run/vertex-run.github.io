@@ -69,8 +69,9 @@ my-project/
                 └── Hello.cls-meta.xml
 ```
 
-Each `.vtx` file produces one Apex class. The class name is the file
-name capitalized (`hello.vtx` becomes `Hello.cls`).
+Each `.vtx` file produces one Apex class. See
+[Apex class and method names](#apex-class-and-method-names) for how the
+name is derived.
 
 The output lands under `main/vertex/classes/` rather than
 `main/default/classes/` to keep Vertex-generated Apex in its own
@@ -137,10 +138,36 @@ against the org.
 
 <Aside type="note">
 `pub fn run(): Void` is the entry-point convention for Apex-class
-builds. The compiler generates `public static void vtx_run()` on the
-Apex class, and the `vtx_` prefix avoids Apex's ban on identifiers
-starting with an underscore.
+builds. It generates `public static void vtx_run()` — `run` is an Apex
+reserved word, so it is one of the few names the compiler rewrites. See
+[Apex class and method names](#apex-class-and-method-names).
 </Aside>
+
+## Apex class and method names
+
+The class name comes from the module path, relative to the source
+directory: each segment is PascalCased and the segments are joined with
+`_`.
+
+| Module | Apex class |
+|---|---|
+| `hello.vtx` | `Hello` |
+| `accounts/aura.vtx` | `Accounts_Aura` |
+| `billing/tax_calculator.vtx` | `Billing_TaxCalculator` |
+
+Method names carry over from the Vertex function names unchanged. A name
+is rewritten only when Apex would reject it:
+
+- it collides with an Apex reserved word (`run`, `order`, `select`,
+  `list`, `map`, `date`, and about sixty others), or
+- it starts with `_`, which Apex identifiers may not.
+
+In both cases the compiler prefixes `vtx_`. Everything else is emitted
+verbatim, so `pub fn say_hello()` is `say_hello()` in Apex and
+`pub fn run()` is `vtx_run()`.
+
+This is what makes replacing an existing Apex class with a Vertex module
+of the same name a change its callers do not see.
 
 ## Where generated classes go
 
