@@ -66,7 +66,8 @@ anywhere, just like `dart run` on a standalone Dart file.
 **With imports → project discovery.** When the entry file contains imports,
 `vertex run` walks upward from the entry file's directory looking for
 `sfdx-project.json`. The directory that contains that file becomes the project
-root, and `<projectRoot>/src/` is the module tree. Only the transitively
+root, and the source directory under it ([`src` in `vertex.jsonc`](/tooling/config/),
+default `src/`) is the module tree. Only the transitively
 reachable modules are loaded; unrelated files in `src/` are never touched.
 
 ```

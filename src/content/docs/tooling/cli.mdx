@@ -61,7 +61,8 @@ hello, vertex!
 
 **Files that import other modules.** When a file has `import`
 statements, Vertex looks up to find an `sfdx-project.json` and uses the
-project's `src/` directory as the module root:
+project's source directory ([`src` in `vertex.jsonc`](/tooling/config/),
+default `src/`) as the module root:
 
 ```
 my-project/
@@ -100,12 +101,12 @@ vertex test [options] [<file>]
 ```
 
 Runs `@Test` functions. With no file argument, discovers every
-`*_test.vtx` file in the project's `src/` and runs them all.
+`*_test.vtx` file under the source directory named by
+[`vertex.jsonc`](/tooling/config/) and runs them all.
 
 | Flag                  | Effect                                              |
 |-----------------------|-----------------------------------------------------|
 | `--filter <name>`     | Only run tests whose name contains `<name>`.        |
-| `--src <dir>`         | Source directory to search (default: `src`).        |
 | `--no-color`          | Disable ANSI color in output.                       |
 | `--help`, `-h`        | Show help for this command.                         |
 
