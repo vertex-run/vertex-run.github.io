@@ -1,6 +1,6 @@
 ---
 title: Control Flow
-description: if/else expressions, if let, block expressions, and early return in Vertex.
+description: if/else expressions, if let, block expressions, grouping, and early return in Vertex.
 sidebar:
   order: 4
 ---
@@ -37,6 +37,18 @@ let result = {
 }
 debug result    // 15
 ```
+
+A block is also how you override operator precedence. Vertex has no
+parenthesised expressions — parentheses are call syntax — so where another
+language reaches for `(`, Vertex uses a block:
+
+```vertex
+debug 2 * { 3 + 4 }    // 14
+debug 2 * 3 + 4        // 10
+```
+
+Conditions are undelimited for the same reason: `if x > 1 { .. }`, never
+`if (x > 1) { .. }`.
 
 ## `if let`: conditional pattern matching
 

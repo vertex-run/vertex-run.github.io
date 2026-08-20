@@ -72,6 +72,25 @@ let label =
 
 There is no ternary operator. An `if` expression is the ternary.
 
+Note the condition carries no parentheses. Vertex reserves `(` for calls, so
+`if (age < 18) { .. }` does not parse.
+
+## Parentheses do not group
+
+Where Apex writes `2 * (3 + 4)`, Vertex uses a block:
+
+```apex
+Integer total = 2 * (3 + 4);
+```
+
+```vertex
+let total = 2 * { 3 + 4 }
+```
+
+A block evaluates to its last expression, so it serves the same purpose — and
+one construct covers both grouping and naming intermediate steps. See
+[Operators](/reference/operators/#grouping).
+
 ## Loops
 
 Apex uses C-style `for`. Vertex uses `for..in`.

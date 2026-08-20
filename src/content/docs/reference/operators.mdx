@@ -34,3 +34,40 @@ for equality.
 ### Unary
 
 `-` (numeric negation), `!` (boolean negation).
+
+### Precedence
+
+Lowest to highest. Operators on the same row associate left to right.
+
+| | Operators |
+|---|---|
+| lowest | `\|>` |
+| | `\|\|` |
+| | `&&` |
+| | `==`, `!=` |
+| | `<`, `<=`, `>`, `>=` |
+| | `+`, `-` |
+| | `*`, `/`, `%` |
+| highest | `!`, unary `-` |
+
+### Grouping
+
+**Vertex groups with braces, not parentheses.** Parentheses are call syntax
+only, so a block is what overrides precedence:
+
+```vertex
+2 * { 3 + 4 }        // 14
+{ 2 * 3 } + 4        // 10
+2 * 3 + 4            // 10 — no grouping needed, `*` binds tighter
+```
+
+A block evaluates its statements in order and takes the value of its last
+expression, so it doubles as a way to name intermediate steps:
+
+```vertex
+let area = { let side = 3 + 4  side * side }
+```
+
+Writing `2 * (3 + 4)` is a parse error that tells you the same thing.
+
+Conditions are not delimited either — `if x > 1 { .. }`, not `if (x > 1) { .. }`.
