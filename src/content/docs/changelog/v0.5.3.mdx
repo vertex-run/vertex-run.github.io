@@ -1,0 +1,22 @@
+---
+title: "v0.5.3"
+description: "Released 2026-08-20."
+slug: changelog/v0.5.3
+sidebar:
+  order: -5003
+---
+
+Released on **2026-08-20**.
+
+### Changed
+- Reaching for parentheses now says what to use instead. Vertex groups
+  expressions with blocks and reserves parentheses for calls, so `2 * (3 + 4)`
+  and `if (x) { .. }` do not parse — but the parser reported only
+  `Expected an expression, got "("`, with no note and no help, on what is the
+  most likely first mistake a reader arriving from another language makes. The
+  message now names parentheses and points at the fix, which differs by
+  position: a block for grouping, nothing at all for a condition. Grouping and
+  operator precedence are also documented for the first time, at
+  [vertex-run.github.io/reference/operators](https://vertex-run.github.io/reference/operators/#grouping).
+
+[View on GitHub](https://github.com/vertex-run/vertex/releases/tag/v0.5.3)
